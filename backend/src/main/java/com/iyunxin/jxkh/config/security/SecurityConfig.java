@@ -35,14 +35,11 @@ public class SecurityConfig {
             // 禁用 CSRF（使用 JWT 不需要）
             .csrf(csrf -> csrf.disable())
             
-            // 配置 CORS
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            
             // 配置会话管理（无状态）
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             
-            // 配置授权规则
+            // 配置授权规则（必须在 CORS 之前）
             .authorizeHttpRequests(auth -> auth
                 // 公开接口
                 .requestMatchers("/api/v1/auth/**").permitAll()
@@ -52,6 +49,9 @@ public class SecurityConfig {
                 // 其他接口需要认证
                 .anyRequest().authenticated()
             )
+            
+            // 配置 CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
             // 添加 JWT 过滤器
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
