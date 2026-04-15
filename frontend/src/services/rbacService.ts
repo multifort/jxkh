@@ -154,6 +154,21 @@ export const userService = {
     const response = await request.post<ApiResponse<User>>(`/users/${id}/unlock`);
     return response.data.data;
   },
+
+  /**
+   * 分配用户角色
+   */
+  assignRoles: async (id: number, roleIds: number[]): Promise<void> => {
+    await request.post<ApiResponse<void>>(`/users/${id}/roles`, roleIds);
+  },
+
+  /**
+   * 获取用户角色ID列表
+   */
+  getUserRoles: async (id: number): Promise<number[]> => {
+    const response = await request.get<ApiResponse<number[]>>(`/users/${id}/roles`);
+    return response.data.data || [];
+  },
 };
 
 /**

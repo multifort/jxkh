@@ -129,9 +129,18 @@ const UserManagePage: React.FC = () => {
   };
 
   // 打开编辑对话框
-  const handleEdit = (user: User) => {
+  const handleEdit = async (user: User) => {
     setEditingUser(user);
     form.setFieldsValue(user);
+    
+    // 加载用户的角色
+    try {
+      const roleIds = await userService.getUserRoles(user.id);
+      form.setFieldsValue({ roleIds });
+    } catch (error) {
+      console.error('加载用户角色失败', error);
+    }
+    
     setModalVisible(true);
   };
 
@@ -168,12 +177,23 @@ const UserManagePage: React.FC = () => {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      const { roleIds, ...userData } = values;
       
       if (editingUser) {
-        await userService.updateUser(editingUser.id, values);
+        // 更新用户基本信息
+        await userService.updateUser(editingUser.id, userData);
+        // 分配角色
+        if (roleIds && roleIds.length > 0) {
+          await userService.assignRoles(editingUser.id, roleIds);
+        }
         message.success('更新成功');
       } else {
-        await userService.createUser(values);
+        // 创建用户
+        const newUser = await userService.createUser(userData);
+        // 分配角色
+        if (roleIds && roleIds.length > 0) {
+          await userService.assignRoles(newUser.id, roleIds);
+        }
         message.success('创建成功');
       }
       
@@ -440,10 +460,10 @@ const UserManagePage: React.FC = () => {
             </Select>
           </Form.Item>
 
-          <Form.Item name="role" label="角色" rules={[{ required: true, message: '请选择角色' }]}>
-            <Select placeholder="请选择角色">
+          <Form.Item name="roleIds" label="角色" rules={[{ required: true, message: '请选择角色' }]}>
+            <Select mode="multiple" placeholder="请选择角色（可多选）">
               {roles.map(role => (
-                <Option key={role.code} value={role.code}>{role.name}</Option>
+                <Option key={role.id} value={role.id}>{role.name}</Option>
               ))}
             </Select>
           </Form.Item>

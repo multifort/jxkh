@@ -1,7 +1,9 @@
 package com.iyunxin.jxkh.module.user.service;
 
 import com.iyunxin.jxkh.module.user.domain.User;
+import com.iyunxin.jxkh.module.user.domain.UserRole;
 import com.iyunxin.jxkh.module.user.repository.UserRepository;
+import com.iyunxin.jxkh.module.user.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,6 +27,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
 
     /**
@@ -172,5 +175,36 @@ public class UserService {
         user.setLoginFailCount(0);
         user.setLockedAt(null);
         return userRepository.save(user);
+    }
+
+    /**
+     * 分配用户角色
+     */
+    @Transactional
+    public void assignRoles(Long userId, List<Long> roleIds) {
+        User user = getUserById(userId);
+        
+        // 删除旧的角色关联
+        userRoleRepository.findByUserId(userId).forEach(ur -> {
+            userRoleRepository.delete(ur);
+        });
+        
+        // 添加新的角色关联
+        for (Long roleId : roleIds) {
+            UserRole userRole = UserRole.builder()
+                    .userId(userId)
+                    .roleId(roleId)
+                    .build();
+            userRoleRepository.save(userRole);
+        }
+        
+        log.info("用户 {} 的角色已更新为: {}", userId, roleIds);
+    }
+
+    /**
+     * 获取用户的角色ID列表
+     */
+    public List<Long> getUserRoleIds(Long userId) {
+        return userRoleRepository.findRoleIdsByUserId(userId);
     }
 }

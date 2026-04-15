@@ -84,4 +84,20 @@ public class UserController {
     public ApiResponse<User> unlockUser(@PathVariable Long id) {
         return ApiResponse.success(userService.unlockUser(id));
     }
+
+    @Operation(summary = "分配用户角色")
+    @PostMapping("/{id}/roles")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('HR')")
+    public ApiResponse<Void> assignRoles(
+            @PathVariable Long id,
+            @RequestBody java.util.List<Long> roleIds) {
+        userService.assignRoles(id, roleIds);
+        return ApiResponse.success(null);
+    }
+
+    @Operation(summary = "获取用户角色ID列表")
+    @GetMapping("/{id}/roles")
+    public ApiResponse<java.util.List<Long>> getUserRoles(@PathVariable Long id) {
+        return ApiResponse.success(userService.getUserRoleIds(id));
+    }
 }
