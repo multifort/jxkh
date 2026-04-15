@@ -4,6 +4,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   DashboardOutlined,
   TeamOutlined,
+  UserOutlined,
   SecurityScanOutlined,
   LogoutOutlined,
 } from '@ant-design/icons';
@@ -44,6 +45,11 @@ const MainLayout: React.FC = () => {
           key: '/settings/org-manage',
           icon: <TeamOutlined />,
           label: '组织架构',
+        },
+        {
+          key: '/settings/user-manage',
+          icon: <UserOutlined />,
+          label: '用户管理',
         },
         {
           key: '/settings/roles',

@@ -3,6 +3,7 @@ import LoginPage from './pages/auth/LoginPage';
 import MainLayout from './components/layout/MainLayout';
 import OrgManagePage from './pages/settings/OrgManagePage';
 import RoleManagePage from './pages/settings/RoleManagePage';
+import UserManagePage from './pages/settings/UserManagePage';
 
 // 简单的路由保护组件
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -47,6 +48,7 @@ function App() {
         >
           <Route index element={<HomePage />} />
           <Route path="settings/org-manage" element={<OrgManagePage />} />
+          <Route path="settings/user-manage" element={<UserManagePage />} />
           <Route path="settings/roles" element={<RoleManagePage />} />
         </Route>
       </Routes>

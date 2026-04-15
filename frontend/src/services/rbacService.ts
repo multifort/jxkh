@@ -54,6 +54,92 @@ export const roleService = {
 };
 
 /**
+ * 用户管理服务
+ */
+export const userService = {
+  /**
+   * 分页查询用户列表
+   */
+  getUsers: async (params: {
+    page?: number;
+    size?: number;
+    keyword?: string;
+    orgId?: number;
+    role?: string;
+  }): Promise<any> => {
+    const response = await request.get<any>('/users', { params });
+    // 如果返回的是数组，转换为分页格式
+    if (Array.isArray(response.data)) {
+      return {
+        content: response.data,
+        totalElements: response.data.length,
+        totalPages: 1,
+        number: params.page || 0,
+        size: params.size || 10,
+      };
+    }
+    // 如果已经是分页格式
+    return response.data;
+  },
+
+  /**
+   * 获取用户详情
+   */
+  getUserById: async (id: number): Promise<User> => {
+    const response = await request.get<ApiResponse<User>>(`/users/${id}`);
+    return response.data.data;
+  },
+
+  /**
+   * 创建用户
+   */
+  createUser: async (data: Partial<User>): Promise<User> => {
+    const response = await request.post<ApiResponse<User>>('/users', data);
+    return response.data.data;
+  },
+
+  /**
+   * 更新用户
+   */
+  updateUser: async (id: number, data: Partial<User>): Promise<User> => {
+    const response = await request.put<ApiResponse<User>>(`/users/${id}`, data);
+    return response.data.data;
+  },
+
+  /**
+   * 删除用户
+   */
+  deleteUser: async (id: number): Promise<void> => {
+    await request.delete<ApiResponse<void>>(`/users/${id}`);
+  },
+
+  /**
+   * 启用/禁用用户
+   */
+  toggleUserStatus: async (id: number): Promise<User> => {
+    const response = await request.patch<ApiResponse<User>>(`/users/${id}/toggle-status`);
+    return response.data.data;
+  },
+
+  /**
+   * 重置密码
+   */
+  resetPassword: async (id: number, newPassword: string): Promise<void> => {
+    await request.post<ApiResponse<void>>(`/users/${id}/reset-password`, null, {
+      params: { newPassword },
+    });
+  },
+
+  /**
+   * 解锁用户
+   */
+  unlockUser: async (id: number): Promise<User> => {
+    const response = await request.post<ApiResponse<User>>(`/users/${id}/unlock`);
+    return response.data.data;
+  },
+};
+
+/**
  * 权限管理服务
  */
 export const permissionService = {
@@ -83,6 +169,14 @@ export const orgService = {
    */
   getOrgTree: async (): Promise<OrgTreeNode[]> => {
     const response = await request.get<ApiResponse<OrgTreeNode[]>>('/orgs/tree');
+    return response.data.data || [];
+  },
+
+  /**
+   * 获取所有活跃组织
+   */
+  getAllActiveOrgs: async (): Promise<Org[]> => {
+    const response = await request.get<ApiResponse<Org[]>>('/orgs');
     return response.data.data || [];
   },
 
