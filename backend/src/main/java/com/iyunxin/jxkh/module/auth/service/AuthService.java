@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,9 +29,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RedisTemplate<String, String> redisTemplate;
-
-    // 临时内存存储（当 Redis 不可用时）
-    private final Map<String, String> refreshTokenMemoryStore = new ConcurrentHashMap<>();
 
     private static final String REFRESH_TOKEN_PREFIX = "refresh_token:";
     private static final long REFRESH_TOKEN_EXPIRE_DAYS = 7;
@@ -76,14 +72,9 @@ public class AuthService {
         String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getUsername(), claims);
         String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getUsername());
 
-        // 7. 存储 Refresh Token 到 Redis（失败时使用内存存储）
+        // 7. 存储 Refresh Token 到 Redis
         String redisKey = REFRESH_TOKEN_PREFIX + user.getId() + ":" + refreshToken;
-        try {
-            redisTemplate.opsForValue().set(redisKey, user.getUsername(), REFRESH_TOKEN_EXPIRE_DAYS, TimeUnit.DAYS);
-        } catch (Exception e) {
-            log.warn("Redis 不可用，使用内存存储 Refresh Token: {}", e.getMessage());
-            refreshTokenMemoryStore.put(redisKey, user.getUsername());
-        }
+        redisTemplate.opsForValue().set(redisKey, user.getUsername(), REFRESH_TOKEN_EXPIRE_DAYS, TimeUnit.DAYS);
 
         // 8. 构建响应
         return LoginResponse.builder()
@@ -115,15 +106,9 @@ public class AuthService {
         Long userId = jwtUtil.getUserIdFromToken(refreshToken);
         String username = jwtUtil.getUsernameFromToken(refreshToken);
 
-        // 2. 检查 Redis 中是否存在（或内存存储）
+        // 2. 检查 Redis 中是否存在
         String redisKey = REFRESH_TOKEN_PREFIX + userId + ":" + refreshToken;
-        String storedUsername = null;
-        try {
-            storedUsername = redisTemplate.opsForValue().get(redisKey);
-        } catch (Exception e) {
-            log.warn("Redis 不可用，从内存存储查找: {}", e.getMessage());
-            storedUsername = refreshTokenMemoryStore.get(redisKey);
-        }
+        String storedUsername = redisTemplate.opsForValue().get(redisKey);
         
         if (storedUsername == null || !storedUsername.equals(username)) {
             throw new RuntimeException("Refresh Token 已失效");
@@ -133,13 +118,8 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
-        // 4. 删除旧的 Refresh Token（Redis 或内存）
-        try {
-            redisTemplate.delete(redisKey);
-        } catch (Exception e) {
-            log.warn("Redis 不可用，从内存存储删除: {}", e.getMessage());
-            refreshTokenMemoryStore.remove(redisKey);
-        }
+        // 4. 删除旧的 Refresh Token
+        redisTemplate.delete(redisKey);
 
         // 5. 生成新的 Token
         Map<String, Object> claims = new HashMap<>();
@@ -151,12 +131,7 @@ public class AuthService {
 
         // 6. 存储新的 Refresh Token
         String newRedisKey = REFRESH_TOKEN_PREFIX + user.getId() + ":" + newRefreshToken;
-        try {
-            redisTemplate.opsForValue().set(newRedisKey, user.getUsername(), REFRESH_TOKEN_EXPIRE_DAYS, TimeUnit.DAYS);
-        } catch (Exception e) {
-            log.warn("Redis 不可用，使用内存存储: {}", e.getMessage());
-            refreshTokenMemoryStore.put(newRedisKey, user.getUsername());
-        }
+        redisTemplate.opsForValue().set(newRedisKey, user.getUsername(), REFRESH_TOKEN_EXPIRE_DAYS, TimeUnit.DAYS);
 
         // 7. 构建响应
         return LoginResponse.builder()
@@ -180,14 +155,9 @@ public class AuthService {
      */
     @Transactional
     public void logout(Long userId, String refreshToken) {
-        // 删除 Redis 中的 Refresh Token（或内存存储）
+        // 删除 Redis 中的 Refresh Token
         String redisKey = REFRESH_TOKEN_PREFIX + userId + ":" + refreshToken;
-        try {
-            redisTemplate.delete(redisKey);
-        } catch (Exception e) {
-            log.warn("Redis 不可用，从内存存储删除: {}", e.getMessage());
-            refreshTokenMemoryStore.remove(redisKey);
-        }
+        redisTemplate.delete(redisKey);
         
         log.info("用户 {} 已退出登录", userId);
     }
