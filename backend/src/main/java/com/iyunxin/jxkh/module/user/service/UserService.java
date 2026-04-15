@@ -38,6 +38,7 @@ public class UserService {
         user.setUsername(userDetails.getUsername());
         user.setEmail(userDetails.getEmail());
         user.setName(userDetails.getName());
+        user.setPhone(userDetails.getPhone());
         return userRepository.save(user);
     }
 
