@@ -16,11 +16,10 @@ const RoleManagePage: React.FC = () => {
   const loadRoles = async () => {
     try {
       setLoading(true);
-      const response = await roleService.getAllActiveRoles();
-      const data = response.data;
+      const data = await roleService.getAllActiveRoles();
       setRoles(data);
-    } catch (error) {
-      message.error('加载角色列表失败');
+    } catch (error: any) {
+      message.error(error.message || '加载角色列表失败');
     } finally {
       setLoading(false);
     }
@@ -50,8 +49,8 @@ const RoleManagePage: React.FC = () => {
       await roleService.deleteRole(roleId);
       message.success('删除成功');
       loadRoles();
-    } catch (error) {
-      message.error('删除失败');
+    } catch (error: any) {
+      message.error(error.message || '删除失败');
     }
   };
 
@@ -70,8 +69,9 @@ const RoleManagePage: React.FC = () => {
       
       setModalVisible(false);
       loadRoles();
-    } catch (error) {
-      message.error('操作失败');
+    } catch (error: any) {
+      if (error.errorFields) return; // 表单校验错误
+      message.error(error.message || '操作失败');
     }
   };
 
@@ -143,6 +143,7 @@ const RoleManagePage: React.FC = () => {
           </Button>
           <Popconfirm
             title="确定要删除此角色吗？"
+            description="删除后无法恢复"
             onConfirm={() => handleDelete(record.id)}
           >
             <Button
@@ -187,6 +188,8 @@ const RoleManagePage: React.FC = () => {
         onOk={handleSubmit}
         onCancel={() => setModalVisible(false)}
         width={600}
+        okText="确定"
+        cancelText="取消"
       >
         <Form form={form} layout="vertical">
           <Form.Item
@@ -217,7 +220,7 @@ const RoleManagePage: React.FC = () => {
           </Form.Item>
 
           <Form.Item name="enabled" label="启用状态" valuePropName="checked" initialValue={true}>
-            <Switch />
+            <Switch checkedChildren="启用" unCheckedChildren="禁用" />
           </Form.Item>
         </Form>
       </Modal>

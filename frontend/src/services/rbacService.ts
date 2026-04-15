@@ -1,6 +1,14 @@
 import request from './api';
 import type { Role, Permission, Org, OrgTreeNode } from '../types/auth';
 
+// API 响应包装器类型
+interface ApiResponse<T> {
+  code: number;
+  message: string;
+  data: T;
+  timestamp: number;
+}
+
 /**
  * 角色管理服务
  */
@@ -8,38 +16,41 @@ export const roleService = {
   /**
    * 获取所有活跃角色
    */
-  getAllActiveRoles: () => 
-    request.get<Role[]>('/roles'),
-
-  /**
-   * 获取角色列表（分页）
-   */
-  getRoleList: (params?: { page?: number; size?: number }) =>
-    request.get<{ content: Role[]; totalElements: number }>('/roles', { params }),
+  getAllActiveRoles: async (): Promise<Role[]> => {
+    const response = await request.get<ApiResponse<Role[]>>('/roles');
+    return response.data.data || [];
+  },
 
   /**
    * 获取角色详情
    */
-  getRoleById: (id: number) =>
-    request.get<Role>(`/roles/${id}`),
+  getRoleById: async (id: number): Promise<Role> => {
+    const response = await request.get<ApiResponse<Role>>(`/roles/${id}`);
+    return response.data.data;
+  },
 
   /**
    * 创建角色
    */
-  createRole: (data: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>) =>
-    request.post<Role>('/roles', data),
+  createRole: async (data: Partial<Role>): Promise<Role> => {
+    const response = await request.post<ApiResponse<Role>>('/roles', data);
+    return response.data.data;
+  },
 
   /**
    * 更新角色
    */
-  updateRole: (id: number, data: Partial<Role>) =>
-    request.put<Role>(`/roles/${id}`, data),
+  updateRole: async (id: number, data: Partial<Role>): Promise<Role> => {
+    const response = await request.put<ApiResponse<Role>>(`/roles/${id}`, data);
+    return response.data.data;
+  },
 
   /**
    * 删除角色
    */
-  deleteRole: (id: number) =>
-    request.delete<void>(`/roles/${id}`),
+  deleteRole: async (id: number): Promise<void> => {
+    await request.delete<ApiResponse<void>>(`/roles/${id}`);
+  },
 };
 
 /**
@@ -49,20 +60,18 @@ export const permissionService = {
   /**
    * 获取所有活跃权限
    */
-  getAllActivePermissions: () =>
-    request.get<Permission[]>('/permissions'),
-
-  /**
-   * 获取权限树
-   */
-  getPermissionTree: () =>
-    request.get<Permission[]>('/permissions/tree'),
+  getAllActivePermissions: async (): Promise<Permission[]> => {
+    const response = await request.get<ApiResponse<Permission[]>>('/permissions');
+    return response.data.data || [];
+  },
 
   /**
    * 检查用户权限
    */
-  checkPermission: (code: string) =>
-    request.get<{ code: string; hasPermission: boolean }>(`/permissions/check/${code}`),
+  checkPermission: async (code: string): Promise<boolean> => {
+    const response = await request.get<ApiResponse<{ code: string; hasPermission: boolean }>>(`/permissions/check`, { params: { code } });
+    return response.data.data?.hasPermission || false;
+  },
 };
 
 /**
@@ -72,36 +81,39 @@ export const orgService = {
   /**
    * 获取组织树
    */
-  getOrgTree: () =>
-    request.get<OrgTreeNode[]>('/orgs/tree'),
-
-  /**
-   * 获取组织列表
-   */
-  getOrgList: (params?: { page?: number; size?: number }) =>
-    request.get<{ content: Org[]; totalElements: number }>('/orgs', { params }),
+  getOrgTree: async (): Promise<OrgTreeNode[]> => {
+    const response = await request.get<ApiResponse<OrgTreeNode[]>>('/orgs/tree');
+    return response.data.data || [];
+  },
 
   /**
    * 获取组织详情
    */
-  getOrgById: (id: number) =>
-    request.get<Org>(`/orgs/${id}`),
+  getOrgById: async (id: number): Promise<Org> => {
+    const response = await request.get<ApiResponse<Org>>(`/orgs/${id}`);
+    return response.data.data;
+  },
 
   /**
    * 创建组织
    */
-  createOrg: (data: Omit<Org, 'id' | 'createdAt' | 'updatedAt'>) =>
-    request.post<Org>('/orgs', data),
+  createOrg: async (data: Partial<Org>): Promise<Org> => {
+    const response = await request.post<ApiResponse<Org>>('/orgs', data);
+    return response.data.data;
+  },
 
   /**
    * 更新组织
    */
-  updateOrg: (id: number, data: Partial<Org>) =>
-    request.put<Org>(`/orgs/${id}`, data),
+  updateOrg: async (id: number, data: Partial<Org>): Promise<Org> => {
+    const response = await request.put<ApiResponse<Org>>(`/orgs/${id}`, data);
+    return response.data.data;
+  },
 
   /**
    * 删除组织
    */
-  deleteOrg: (id: number) =>
-    request.delete<void>(`/orgs/${id}`),
+  deleteOrg: async (id: number): Promise<void> => {
+    await request.delete<ApiResponse<void>>(`/orgs/${id}`);
+  },
 };
