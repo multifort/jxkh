@@ -1,0 +1,129 @@
+spring:
+  application:
+    name: jxkh-backend
+  
+  # 数据源配置
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:113.45.154.4}:${MYSQL_PORT:33306}/${MYSQL_DATABASE:jxkh_db}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:Zhikeyunxin123$}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    
+    # HikariCP 连接池配置
+    hikari:
+      # 最小空闲连接数
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      # 最大连接池大小
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      # 连接超时时间（毫秒）
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT:30000}
+      # 空闲连接超时时间（毫秒）
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT:600000}
+      # 连接最大生命周期（毫秒）
+      max-lifetime: ${DB_POOL_MAX_LIFETIME:1800000}
+      # 连接测试查询
+      connection-test-query: SELECT 1
+      # 连接池名称
+      pool-name: JXKH-HikariPool
+      # 自动提交
+      auto-commit: true
+      # 泄漏检测阈值（毫秒，0表示禁用）
+      leak-detection-threshold: ${DB_POOL_LEAK_DETECTION:60000}
+  
+  # JPA 配置
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        format_sql: ${HIBERNATE_FORMAT_SQL:true}
+        dialect: org.hibernate.dialect.MySQLDialect
+        # 启用二级缓存
+        cache:
+          use_second_level_cache: false
+        # 批量操作优化
+        jdbc:
+          batch_size: 50
+          order_inserts: true
+          order_updates: true
+  
+  # Redis 配置
+  redis:
+    host: ${REDIS_HOST:113.45.154.4}
+    port: ${REDIS_PORT:33379}
+    password: ${REDIS_PASSWORD:scmp@ABC*&e}
+    database: ${REDIS_DATABASE:7}
+    # 连接超时时间
+    timeout: ${REDIS_TIMEOUT:5000ms}
+    # Lettuce 连接池配置
+    lettuce:
+      pool:
+        # 最大活跃连接数
+        max-active: ${REDIS_POOL_MAX_ACTIVE:20}
+        # 最大空闲连接数
+        max-idle: ${REDIS_POOL_MAX_IDLE:10}
+        # 最小空闲连接数
+        min-idle: ${REDIS_POOL_MIN_IDLE:5}
+        # 获取连接最大等待时间（毫秒）
+        max-wait: ${REDIS_POOL_MAX_WAIT:3000ms}
+      # 关闭超时时间
+      shutdown-timeout: ${REDIS_SHUTDOWN_TIMEOUT:100ms}
+
+# 服务器配置
+server:
+  port: ${SERVER_PORT:8080}
+  #  servlet:
+  #    context-path: /api
+  # 压缩配置
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+# 日志配置
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.iyunxin.jxkh: ${LOG_LEVEL_APP:DEBUG}
+    org.springframework.web: ${LOG_LEVEL_WEB:INFO}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:DEBUG}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_SQL_BINDER:TRACE}
+  file:
+    name: ${LOG_FILE_PATH:logs}/application.log
+    max-size: ${LOG_FILE_MAX_SIZE:10MB}
+    max-history: ${LOG_FILE_MAX_HISTORY:30}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# JWT 配置
+jwt:
+  secret: ${JWT_SECRET:jxkh-secret-key-change-in-production-2026-minimum-256-bits}
+  expiration: ${JWT_EXPIRATION:86400000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+  header: Authorization
+  prefix: "Bearer "
+
+# AI 服务配置
+ai:
+  openai:
+    api-key: ${AI_API_KEY:}
+    model: ${AI_MODEL:gpt-4}
+    base-url: ${AI_BASE_URL:https://api.openai.com/v1}
+    timeout: ${AI_TIMEOUT:30000}
+    enabled: ${AI_ENABLED:false}

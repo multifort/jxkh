@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: enterprise-guardian
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: enterprise-guardian
+data:
+  redis-host: "redis-master.redis.svc.cluster.local"
+  redis-port: "6379"
+  mq-host: "rabbitmq.rabbitmq.svc.cluster.local"
+  mq-port: "5672"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: enterprise-guardian
+data:
+  api-base-url: "http://backend:8080/api"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-secrets
+  namespace: enterprise-guardian
+type: Opaque
+data:
+  db-url: cG9zdGdyZXNxbTpzdGFuZGFsb2M6MzQzOkhUVjEwMFgxMjM0NTY=
+  db-username: YWRtaW4=
+  db-password: cGFzc3dvcmQxMjM=
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: enterprise-guardian
+  labels:
+    app: backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: enterprise-guardian
+  labels:
+    app: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: frontend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  namespace: enterprise-guardian
+  labels:
+    app: redis
+    role: master
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+  selector:
+    app: redis
+    role: master
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: enterprise-guardian
+  labels:
+    app: rabbitmq
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5672
+    targetPort: 5672
+    protocol: TCP
+    name: amqp
+  - port: 15672
+    targetPort: 15672
+    protocol: TCP
+    name: management
+  selector:
+    app: rabbitmq
