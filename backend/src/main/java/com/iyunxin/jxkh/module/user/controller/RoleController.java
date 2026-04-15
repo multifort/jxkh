@@ -55,4 +55,20 @@ public class RoleController {
         roleService.deleteRole(id);
         return ApiResponse.success(null);
     }
+
+    @Operation(summary = "分配角色权限")
+    @PostMapping("/{id}/permissions")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<Void> assignPermissions(
+            @PathVariable Long id,
+            @RequestBody java.util.List<Long> permissionIds) {
+        roleService.assignPermissions(id, permissionIds);
+        return ApiResponse.success(null);
+    }
+
+    @Operation(summary = "获取角色权限ID列表")
+    @GetMapping("/{id}/permissions")
+    public ApiResponse<java.util.List<Long>> getRolePermissions(@PathVariable Long id) {
+        return ApiResponse.success(roleService.getRolePermissionIds(id));
+    }
 }

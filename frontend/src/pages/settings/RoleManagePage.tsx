@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Button, Modal, Form, Input, InputNumber, Switch, message, Space, Popconfirm, Tag } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Modal, Form, Input, InputNumber, Switch, message, Space, Popconfirm, Tag, Transfer } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { roleService } from '../../services/rbacService';
-import type { Role } from '../../types/auth';
+import { roleService, permissionService } from '../../services/rbacService';
+import type { Role, Permission } from '../../types/auth';
 
 const RoleManagePage: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [permissionModalVisible, setPermissionModalVisible] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [targetKeys, setTargetKeys] = useState<number[]>([]); // 已分配的权限ID
 
   // 加载角色列表
   const loadRoles = async () => {
@@ -25,8 +28,19 @@ const RoleManagePage: React.FC = () => {
     }
   };
 
+  // 加载所有权限
+  const loadPermissions = async () => {
+    try {
+      const data = await permissionService.getAllActivePermissions();
+      setPermissions(data);
+    } catch (error: any) {
+      console.error('加载权限列表失败', error);
+    }
+  };
+
   useEffect(() => {
     loadRoles();
+    loadPermissions();
   }, []);
 
   // 打开新增对话框
@@ -51,6 +65,33 @@ const RoleManagePage: React.FC = () => {
       loadRoles();
     } catch (error: any) {
       message.error(error.message || '删除失败');
+    }
+  };
+
+  // 打开权限分配对话框
+  const handleAssignPermissions = async (role: Role) => {
+    setEditingRole(role);
+    try {
+      // 获取角色当前的权限
+      const permissionIds = await roleService.getRolePermissions(role.id);
+      setTargetKeys(permissionIds);
+      setPermissionModalVisible(true);
+    } catch (error: any) {
+      message.error(error.message || '加载角色权限失败');
+    }
+  };
+
+  // 提交权限分配
+  const handlePermissionSubmit = async () => {
+    if (!editingRole) return;
+    
+    try {
+      await roleService.assignPermissions(editingRole.id, targetKeys);
+      message.success('权限分配成功');
+      setPermissionModalVisible(false);
+      setTargetKeys([]);
+    } catch (error: any) {
+      message.error(error.message || '权限分配失败');
     }
   };
 
@@ -129,7 +170,7 @@ const RoleManagePage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 200,
+      width: 280,
       fixed: 'right',
       render: (_, record) => (
         <Space size="small">
@@ -140,6 +181,14 @@ const RoleManagePage: React.FC = () => {
             onClick={() => handleEdit(record)}
           >
             编辑
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            icon={<KeyOutlined />}
+            onClick={() => handleAssignPermissions(record)}
+          >
+            分配权限
           </Button>
           <Popconfirm
             title="确定要删除此角色吗？"
@@ -223,6 +272,41 @@ const RoleManagePage: React.FC = () => {
             <Switch checkedChildren="启用" unCheckedChildren="禁用" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* 权限分配对话框 */}
+      <Modal
+        title={`分配权限 - ${editingRole?.name || ''}`}
+        open={permissionModalVisible}
+        onOk={handlePermissionSubmit}
+        onCancel={() => {
+          setPermissionModalVisible(false);
+          setTargetKeys([]);
+        }}
+        width={800}
+        okText="确定"
+        cancelText="取消"
+      >
+        <Transfer
+          dataSource={permissions.map(p => ({
+            key: p.id,
+            title: `${p.name} (${p.code})`,
+            description: p.type === 'MENU' ? '菜单' : p.type === 'BUTTON' ? '按钮' : '数据',
+          }))}
+          titles={['可选权限', '已选权限']}
+          targetKeys={targetKeys}
+          onChange={(newTargetKeys) => setTargetKeys(newTargetKeys as number[])}
+          render={(item) => (
+            <div>
+              <div>{item.title}</div>
+              {item.description && <div style={{ fontSize: 12, color: '#999' }}>{item.description}</div>}
+            </div>
+          )}
+          listStyle={{
+            width: 350,
+            height: 400,
+          }}
+        />
       </Modal>
     </Card>
   );

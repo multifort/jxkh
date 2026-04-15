@@ -1,6 +1,8 @@
 package com.iyunxin.jxkh.module.user.service;
 
 import com.iyunxin.jxkh.module.user.domain.Role;
+import com.iyunxin.jxkh.module.user.domain.RolePermission;
+import com.iyunxin.jxkh.module.user.repository.RolePermissionRepository;
 import com.iyunxin.jxkh.module.user.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ import java.util.List;
 public class RoleService {
 
     private final RoleRepository roleRepository;
+    private final RolePermissionRepository rolePermissionRepository;
 
     /**
      * 获取所有活跃角色
@@ -77,6 +80,39 @@ public class RoleService {
         role.setIsDeleted(true);
         roleRepository.save(role);
         log.info("角色已删除: {}", roleId);
+    }
+
+    /**
+     * 分配角色权限
+     */
+    @Transactional
+    @CacheEvict(value = {"roles", "userPermissions"}, allEntries = true)
+    public void assignPermissions(Long roleId, List<Long> permissionIds) {
+        Role role = getRoleById(roleId);
+        
+        // 删除旧的权限关联
+        rolePermissionRepository.deleteByRoleId(roleId);
+        
+        // 添加新的权限关联
+        for (Long permissionId : permissionIds) {
+            RolePermission rolePermission = RolePermission.builder()
+                    .roleId(roleId)
+                    .permissionId(permissionId)
+                    .build();
+            rolePermissionRepository.save(rolePermission);
+        }
+        
+        log.info("角色 {} 的权限已更新为: {}", roleId, permissionIds);
+    }
+
+    /**
+     * 获取角色的权限ID列表
+     */
+    public List<Long> getRolePermissionIds(Long roleId) {
+        return rolePermissionRepository.findByRoleId(roleId)
+                .stream()
+                .map(RolePermission::getPermissionId)
+                .toList();
     }
 }
 

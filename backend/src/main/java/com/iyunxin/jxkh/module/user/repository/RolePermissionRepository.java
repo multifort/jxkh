@@ -4,6 +4,8 @@ import com.iyunxin.jxkh.module.user.domain.RolePermission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * 角色权限关联 Repository
  */
@@ -11,4 +13,6 @@ import org.springframework.stereotype.Repository;
 public interface RolePermissionRepository extends JpaRepository<RolePermission, Long> {
 
     void deleteByRoleId(Long roleId);
+    
+    List<RolePermission> findByRoleId(Long roleId);
 }

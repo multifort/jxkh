@@ -51,6 +51,21 @@ export const roleService = {
   deleteRole: async (id: number): Promise<void> => {
     await request.delete<ApiResponse<void>>(`/roles/${id}`);
   },
+
+  /**
+   * 分配角色权限
+   */
+  assignPermissions: async (id: number, permissionIds: number[]): Promise<void> => {
+    await request.post<ApiResponse<void>>(`/roles/${id}/permissions`, permissionIds);
+  },
+
+  /**
+   * 获取角色权限ID列表
+   */
+  getRolePermissions: async (id: number): Promise<number[]> => {
+    const response = await request.get<ApiResponse<number[]>>(`/roles/${id}/permissions`);
+    return response.data.data || [];
+  },
 };
 
 /**
