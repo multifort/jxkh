@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/auth/LoginPage';
+import MainLayout from './components/layout/MainLayout';
 import OrgTreePage from './pages/settings/OrgTreePage';
 import RoleManagePage from './pages/settings/RoleManagePage';
 
@@ -40,26 +41,14 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <HomePage />
+              <MainLayout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/settings/org-tree"
-          element={
-            <ProtectedRoute>
-              <OrgTreePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings/roles"
-          element={
-            <ProtectedRoute>
-              <RoleManagePage />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route index element={<HomePage />} />
+          <Route path="settings/org-tree" element={<OrgTreePage />} />
+          <Route path="settings/roles" element={<RoleManagePage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
