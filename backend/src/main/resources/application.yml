@@ -114,6 +114,18 @@ jwt:
   header: Authorization
   prefix: "Bearer "
 
+# 应用安全配置
+app:
+  security:
+    # Refresh Token Cookie 配置
+    refresh-token:
+      cookie-name: ${REFRESH_TOKEN_COOKIE_NAME:refresh_token}
+      max-age: ${REFRESH_TOKEN_MAX_AGE:604800}  # 7天（秒）
+    # 并发登录限制
+    concurrent-login:
+      enabled: ${CONCURRENT_LOGIN_ENABLED:true}
+      max-sessions: ${CONCURRENT_LOGIN_MAX_SESSIONS:3}
+
 # AI 服务配置
 ai:
   openai:

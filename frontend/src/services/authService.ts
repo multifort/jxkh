@@ -16,7 +16,7 @@ export interface UserInfo {
 
 export interface LoginResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;  // 可选，现在通过 Cookie 传输
   tokenType: string;
   expiresIn: number;
   user: UserInfo;
@@ -32,20 +32,19 @@ export const authService = {
   },
 
   /**
-   * 刷新 Token
+   * 刷新 Token（浏览器自动携带 Cookie）
    */
-  refreshToken: async (refreshToken: string): Promise<LoginResponse> => {
-    const response = await apiClient.post('/auth/refresh', { refreshToken });
+  refreshToken: async (): Promise<LoginResponse> => {
+    const response = await apiClient.post('/auth/refresh');
     return response.data.data;
   },
 
   /**
-   * 退出登录
+   * 退出登录（浏览器自动清除 Cookie）
    */
-  logout: async (userId: number, refreshToken: string): Promise<void> => {
+  logout: async (userId: number): Promise<void> => {
     await apiClient.post('/auth/logout', null, {
       headers: { 'X-User-Id': userId },
-      params: { refreshToken },
     });
   },
 

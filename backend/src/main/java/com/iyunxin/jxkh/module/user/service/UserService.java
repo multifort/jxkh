@@ -29,23 +29,38 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DataPermissionService dataPermissionService;
 
     /**
-     * 分页查询用户列表
+     * 分页查询用户列表（带数据权限控制）
      */
     public Page<User> getUsers(int page, int size, String keyword, Long orgId, String role) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         
+        // TODO: 从 SecurityContext 获取当前用户ID
+        // Long currentUserId = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        // 暂时使用固定值，实际应从 JWT Token 中获取
+        Long currentUserId = 1L;
+        
+        Page<User> users;
         if (keyword != null && !keyword.trim().isEmpty()) {
-            return userRepository.findByNameContainingOrUsernameContainingAndIsDeletedFalse(
+            users = userRepository.findByNameContainingOrUsernameContainingAndIsDeletedFalse(
                     keyword, keyword, pageable);
         } else if (orgId != null) {
-            return userRepository.findByOrgIdAndIsDeletedFalse(orgId, pageable);
+            // 验证组织权限
+            Long safeOrgId = dataPermissionService.getSafeOrgId(currentUserId, orgId);
+            users = userRepository.findByOrgIdAndIsDeletedFalse(safeOrgId, pageable);
         } else if (role != null && !role.trim().isEmpty()) {
-            return userRepository.findByRoleAndIsDeletedFalse(role, pageable);
+            users = userRepository.findByRoleAndIsDeletedFalse(role, pageable);
         } else {
-            return userRepository.findByIsDeletedFalse(pageable);
+            users = userRepository.findByIsDeletedFalse(pageable);
         }
+        
+        // 应用数据权限过滤
+        List<User> filteredUsers = dataPermissionService.filterAccessibleUsers(currentUserId, users.getContent());
+        
+        // 重新构建 Page 对象
+        return new org.springframework.data.domain.PageImpl<>(filteredUsers, pageable, filteredUsers.size());
     }
 
     /**

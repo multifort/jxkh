@@ -7,6 +7,7 @@ import com.iyunxin.jxkh.module.user.domain.User;
 import com.iyunxin.jxkh.module.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,9 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 认证服务
@@ -30,6 +34,12 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RedisTemplate<String, String> redisTemplate;
+    
+    @Value("${app.security.concurrent-login.enabled:true}")
+    private boolean concurrentLoginEnabled;
+    
+    @Value("${app.security.concurrent-login.max-sessions:3}")
+    private int maxSessions;
 
     // 内存存储（当 Redis 不可用时）
     private final Map<String, String> refreshTokenMemoryStore = new ConcurrentHashMap<>();
@@ -64,6 +74,11 @@ public class AuthService {
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
 
+        // 5. 检查并发登录限制
+        if (concurrentLoginEnabled) {
+            checkConcurrentLogin(user.getId());
+        }
+
         // 6. 生成 Token
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
@@ -81,6 +96,11 @@ public class AuthService {
             log.warn("Redis 不可用，使用内存存储: {}", e.getMessage());
             refreshTokenMemoryStore.put(redisKey, user.getUsername());
         }
+        
+        // 8. 记录用户会话（用于并发控制）
+        if (concurrentLoginEnabled) {
+            recordUserSession(user.getId(), refreshToken);
+        }
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -96,6 +116,50 @@ public class AuthService {
                         .orgId(user.getOrgId())
                         .build())
                 .build();
+    }
+    
+    /**
+     * 检查并发登录限制
+     */
+    private void checkConcurrentLogin(Long userId) {
+        String sessionKey = "user_sessions:" + userId;
+        
+        try {
+            // 获取当前用户的所有活跃会话
+            Set<String> sessions = redisTemplate.opsForZSet().range(sessionKey, 0, -1);
+            
+            if (sessions != null && sessions.size() >= maxSessions) {
+                // 超出限制，踢出最早的会话
+                String oldestSession = sessions.iterator().next();
+                redisTemplate.opsForZSet().remove(sessionKey, oldestSession);
+                
+                // 删除该会话的 Refresh Token
+                redisTemplate.delete(REFRESH_TOKEN_PREFIX + userId + ":" + oldestSession);
+                
+                log.info("用户 {} 超出最大会话数限制({})，已踢出最早会话", userId, maxSessions);
+            }
+        } catch (Exception e) {
+            log.warn("检查并发登录失败: {}", e.getMessage());
+            // 不阻断登录流程
+        }
+    }
+    
+    /**
+     * 记录用户会话
+     */
+    private void recordUserSession(Long userId, String refreshToken) {
+        String sessionKey = "user_sessions:" + userId;
+        
+        try {
+            // 使用 ZSet 存储会话，score 为时间戳
+            redisTemplate.opsForZSet().add(sessionKey, refreshToken, System.currentTimeMillis());
+            // 设置过期时间（7天）
+            redisTemplate.expire(sessionKey, REFRESH_TOKEN_EXPIRE_DAYS, TimeUnit.DAYS);
+            
+            log.debug("用户 {} 的会话已记录", userId);
+        } catch (Exception e) {
+            log.warn("记录用户会话失败: {}", e.getMessage());
+        }
     }
 
     /**
@@ -174,7 +238,27 @@ public class AuthService {
         } catch (Exception e) {
             refreshTokenMemoryStore.remove(redisKey);
         }
+        
+        // 清除会话记录
+        if (concurrentLoginEnabled) {
+            clearUserSession(userId, refreshToken);
+        }
+        
         log.info("用户 {} 已退出登录", userId);
+    }
+    
+    /**
+     * 清除用户会话记录
+     */
+    private void clearUserSession(Long userId, String refreshToken) {
+        String sessionKey = "user_sessions:" + userId;
+        
+        try {
+            redisTemplate.opsForZSet().remove(sessionKey, refreshToken);
+            log.debug("用户 {} 的会话已清除", userId);
+        } catch (Exception e) {
+            log.warn("清除用户会话失败: {}", e.getMessage());
+        }
     }
 
     public LoginResponse.UserInfo getCurrentUser(Long userId) {
