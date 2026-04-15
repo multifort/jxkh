@@ -1,0 +1,47 @@
+version: '3.8'
+
+# 说明：此文件仅供参考，项目使用远程数据库和 Redis
+# 如需本地开发环境，取消注释以下服务配置
+
+services:
+  # 数据库（可选 - 本地开发用）
+  # mysql:
+  #   image: mysql:8.0
+  #   container_name: jxkh-mysql
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=root
+  #     - MYSQL_DATABASE=jxkh_db
+  #     - MYSQL_USER=jxkh
+  #     - MYSQL_PASSWORD=jxkh123456
+  #   volumes:
+  #     - mysql-data:/var/lib/mysql
+  #   ports:
+  #     - '3306:3306'
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # Redis 缓存（可选 - 本地开发用）
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: jxkh-redis
+  #   command: redis-server --appendonly yes
+  #   volumes:
+  #     - redis-data:/data
+  #   ports:
+  #     - '6379:6379'
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
