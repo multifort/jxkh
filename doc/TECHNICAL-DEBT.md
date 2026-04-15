@@ -35,11 +35,15 @@
 **相关文件**: 
 - `backend/src/main/java/com/iyunxin/jxkh/module/user/service/DataPermissionService.java`
 - `backend/src/main/java/com/iyunxin/jxkh/module/user/service/UserService.java`
+- `backend/src/main/java/com/iyunxin/jxkh/common/util/SecurityUtils.java`
 
-**TODO**:
-- [ ] 从 JWT Token 中获取当前用户ID（当前使用固定值 1L）
-- [ ] 在更多 Service 方法中应用数据权限过滤
-- [ ] 添加 org:view:all 和 org:view:cross 权限代码到数据库
+**已完善**:
+- [x] 从 JWT Token 中获取当前用户ID（通过 SecurityUtils）
+- [x] UserService 已应用数据权限过滤
+- [x] 添加 org:view:all 和 org:view:cross 权限支持
+
+**待优化**:
+- [ ] 在更多 Service 方法中应用数据权限过滤（如 OrgService、PerformanceService 等）
 
 ---
 
@@ -64,17 +68,15 @@
 
 ## P1 - 中优先级（功能完善）
 
-### 5. AuthServiceTest 编译错误
+### 5. ~~AuthServiceTest 编译错误~~ ✅ 已完成
 **优先级**: P1  
-**状态**: 待修复  
-**描述**: AuthServiceTest 存在编译错误，需要修正方法签名以匹配实际类定义  
-**影响**: 无法运行认证相关的单元测试  
-**预计工作量**: 0.5 天
-
-**修复步骤**:
-1. 检查 JwtUtil 的实际方法签名
-2. 检查 LoginResponse 的实际字段名
-3. 修正测试代码中的 Mock 配置
+**状态**: 已修复  
+**完成时间**: 2026-04-15  
+**描述**: AuthServiceTest 编译错误已修复，所有测试用例可正常运行  
+**修复内容**:
+- 修正 JwtUtil 方法签名调用
+- 修正 LoginResponse 字段访问
+- 添加必要的 Mock 配置
 
 ---
 
@@ -251,12 +253,12 @@
 | 优先级 | 数量 | 已完成 | 进行中 | 未开始 |
 |--------|------|--------|--------|--------|
 | P0 | 4 | 4 | 0 | 0 |
-| P1 | 3 | 0 | 0 | 3 |
+| P1 | 3 | 1 | 0 | 2 |
 | P2 | 5 | 0 | 0 | 5 |
 | P3 | 4 | 0 | 0 | 4 |
-| **总计** | **16** | **4** | **0** | **12** |
+| **总计** | **16** | **5** | **0** | **11** |
 
-**完成率**: 25% (4/16)
+**完成率**: 31.25% (5/16)
 
 ---
 
@@ -264,6 +266,7 @@
 
 - **2026-04-15**: 创建文档，标记 Sprint 1 完成的4个P0任务
 - **2026-04-15**: 记录剩余的技术债务项
+- **2026-04-15**: 修复 AuthServiceTest 编译错误，完善数据权限获取用户ID
 
 ---
 
