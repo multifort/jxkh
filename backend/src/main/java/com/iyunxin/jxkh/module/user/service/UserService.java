@@ -1,5 +1,6 @@
 package com.iyunxin.jxkh.module.user.service;
 
+import com.iyunxin.jxkh.common.util.SecurityUtils;
 import com.iyunxin.jxkh.module.user.domain.User;
 import com.iyunxin.jxkh.module.user.domain.UserRole;
 import com.iyunxin.jxkh.module.user.repository.UserRepository;
@@ -37,10 +38,8 @@ public class UserService {
     public Page<User> getUsers(int page, int size, String keyword, Long orgId, String role) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         
-        // TODO: 从 SecurityContext 获取当前用户ID
-        // Long currentUserId = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        // 暂时使用固定值，实际应从 JWT Token 中获取
-        Long currentUserId = 1L;
+        // 从 SecurityContext 获取当前用户ID
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         
         Page<User> users;
         if (keyword != null && !keyword.trim().isEmpty()) {

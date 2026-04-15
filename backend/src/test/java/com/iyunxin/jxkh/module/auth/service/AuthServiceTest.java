@@ -68,18 +68,18 @@ class AuthServiceTest {
         // Given
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches("password123", "$2a$10$encodedPassword")).thenReturn(true);
-        when(jwtUtil.generateToken(anyLong(), anyString(), anyString())).thenReturn("access-token");
-        when(jwtUtil.generateRefreshToken(anyLong())).thenReturn("refresh-token");
+        when(jwtUtil.generateAccessToken(eq(1L), eq("testuser"), anyMap())).thenReturn("access-token");
+        when(jwtUtil.generateRefreshToken(eq(1L), eq("testuser"))).thenReturn("refresh-token");
 
         // When
         LoginResponse response = authService.login(loginRequest);
 
         // Then
         assertNotNull(response);
-        assertNotNull(response.getToken());
+        assertNotNull(response.getAccessToken());
         assertNotNull(response.getRefreshToken());
-        assertNotNull(response.getUserInfo());
-        assertEquals("testuser", response.getUserInfo().getUsername());
+        assertNotNull(response.getUser());
+        assertEquals("testuser", response.getUser().getUsername());
         
         verify(redisTemplate).opsForValue();
         verify(userRepository).save(any(User.class)); // 更新最后登录时间
@@ -174,17 +174,20 @@ class AuthServiceTest {
         // Given
         String refreshToken = "valid-refresh-token";
         when(redisTemplate.opsForValue()).thenReturn(mock(org.springframework.data.redis.core.ValueOperations.class));
-        when(redisTemplate.opsForValue().get(anyString())).thenReturn("1");
+        when(redisTemplate.opsForValue().get(anyString())).thenReturn("testuser");
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(jwtUtil.generateToken(anyLong(), anyString(), anyString())).thenReturn("new-access-token");
-        when(jwtUtil.generateRefreshToken(anyLong())).thenReturn("new-refresh-token");
+        when(jwtUtil.validateToken(refreshToken)).thenReturn(true);
+        when(jwtUtil.getUserIdFromToken(refreshToken)).thenReturn(1L);
+        when(jwtUtil.getUsernameFromToken(refreshToken)).thenReturn("testuser");
+        when(jwtUtil.generateAccessToken(eq(1L), eq("testuser"), anyMap())).thenReturn("new-access-token");
+        when(jwtUtil.generateRefreshToken(eq(1L), eq("testuser"))).thenReturn("new-refresh-token");
 
         // When
         LoginResponse response = authService.refreshToken(refreshToken);
 
         // Then
         assertNotNull(response);
-        assertEquals("new-access-token", response.getToken());
+        assertEquals("new-access-token", response.getAccessToken());
         assertEquals("new-refresh-token", response.getRefreshToken());
     }
 
