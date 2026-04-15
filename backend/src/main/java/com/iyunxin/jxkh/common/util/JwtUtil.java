@@ -78,6 +78,14 @@ public class JwtUtil {
     }
 
     /**
+     * 从 Token 中获取角色
+     */
+    public String getRoleFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        return claims.get("role", String.class);
+    }
+
+    /**
      * 验证 Token 是否有效
      */
     public boolean validateToken(String token) {

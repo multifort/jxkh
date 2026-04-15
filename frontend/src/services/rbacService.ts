@@ -1,5 +1,5 @@
 import request from './api';
-import type { Role, Permission, Org, OrgTreeNode } from '../types/auth';
+import type { Role, Permission, Org, OrgTreeNode, User } from '../types/auth';
 
 // API 响应包装器类型
 interface ApiResponse<T> {
@@ -115,5 +115,13 @@ export const orgService = {
    */
   deleteOrg: async (id: number): Promise<void> => {
     await request.delete<ApiResponse<void>>(`/orgs/${id}`);
+  },
+
+  /**
+   * 获取组织下的用户列表
+   */
+  getOrgUsers: async (orgId: number): Promise<User[]> => {
+    const response = await request.get<ApiResponse<User[]>>(`/orgs/${orgId}/users`);
+    return response.data.data || [];
   },
 };

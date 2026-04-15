@@ -55,6 +55,33 @@ export interface OrgTreeNode extends Org {
 }
 
 /**
+ * 用户类型
+ */
+export interface User {
+  id: number;
+  username: string;
+  password?: string;
+  employeeNo: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  orgId: number;
+  positionId?: number;
+  managerId?: number;
+  role: string;
+  status: string;
+  avatar?: string;
+  lastLoginAt?: string;
+  loginFailCount?: number;
+  lockedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: number;
+  updatedBy?: number;
+  isDeleted?: boolean;
+}
+
+/**
  * 用户信息
  */
 export interface UserInfo {

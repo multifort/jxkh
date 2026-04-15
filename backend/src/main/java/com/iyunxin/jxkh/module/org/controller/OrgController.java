@@ -3,6 +3,8 @@ package com.iyunxin.jxkh.module.org.controller;
 import com.iyunxin.jxkh.common.response.ApiResponse;
 import com.iyunxin.jxkh.module.org.domain.Org;
 import com.iyunxin.jxkh.module.org.service.OrgService;
+import com.iyunxin.jxkh.module.user.domain.User;
+import com.iyunxin.jxkh.module.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.List;
 public class OrgController {
 
     private final OrgService orgService;
+    private final UserRepository userRepository;
 
     @Operation(summary = "获取组织树")
     @GetMapping("/tree")
@@ -66,5 +69,11 @@ public class OrgController {
     @GetMapping("/{id}/children-ids")
     public ApiResponse<List<Long>> getSubOrgIds(@PathVariable Long id) {
         return ApiResponse.success(orgService.getSubOrgIds(id));
+    }
+
+    @Operation(summary = "获取组织下的用户列表")
+    @GetMapping("/{id}/users")
+    public ApiResponse<List<User>> getOrgUsers(@PathVariable Long id) {
+        return ApiResponse.success(userRepository.findByOrgIdAndIsDeletedFalse(id));
     }
 }

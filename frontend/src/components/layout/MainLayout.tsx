@@ -41,7 +41,7 @@ const MainLayout: React.FC = () => {
       label: '系统设置',
       children: [
         {
-          key: '/settings/org-tree',
+          key: '/settings/org-manage',
           icon: <TeamOutlined />,
           label: '组织架构',
         },

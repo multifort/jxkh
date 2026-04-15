@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/auth/LoginPage';
 import MainLayout from './components/layout/MainLayout';
-import OrgTreePage from './pages/settings/OrgTreePage';
+import OrgManagePage from './pages/settings/OrgManagePage';
 import RoleManagePage from './pages/settings/RoleManagePage';
 
 // 简单的路由保护组件
@@ -46,7 +46,7 @@ function App() {
           }
         >
           <Route index element={<HomePage />} />
-          <Route path="settings/org-tree" element={<OrgTreePage />} />
+          <Route path="settings/org-manage" element={<OrgManagePage />} />
           <Route path="settings/roles" element={<RoleManagePage />} />
         </Route>
       </Routes>

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +36,7 @@ public class OrgService {
      */
     private List<OrgTreeNode> buildTree(List<Org> allOrgs, Long parentId) {
         return allOrgs.stream()
-                .filter(org -> parentId == null ? org.getParentId() == null : org.getParentId().equals(parentId))
+                .filter(org -> Objects.equals(org.getParentId(), parentId))
                 .map(org -> {
                     OrgTreeNode node = new OrgTreeNode(org);
                     node.setChildren(buildTree(allOrgs, org.getId()));
@@ -131,7 +132,7 @@ public class OrgService {
      */
     private void collectSubOrgIds(List<Org> allOrgs, Long parentId, List<Long> result) {
         allOrgs.stream()
-                .filter(org -> org.getParentId() != null && org.getParentId().equals(parentId))
+                .filter(org -> org.getParentId() != null && Objects.equals(org.getParentId(), parentId))
                 .forEach(org -> {
                     result.add(org.getId());
                     collectSubOrgIds(allOrgs, org.getId(), result);

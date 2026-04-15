@@ -39,15 +39,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwt != null && jwtUtil.validateToken(jwt)) {
                 Long userId = jwtUtil.getUserIdFromToken(jwt);
                 String username = jwtUtil.getUsernameFromToken(jwt);
+                String role = jwtUtil.getRoleFromToken(jwt);
                 
+                // 设置权限信息
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                if (role != null && !role.isEmpty()) {
+                    // Spring Security 的 hasRole 会自动添加 ROLE_ 前缀
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                }
                 
                 UsernamePasswordAuthenticationToken authentication = 
                     new UsernamePasswordAuthenticationToken(userId, null, authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 
-                log.debug("Authenticated user: {} (id={})", username, userId);
+                log.debug("Authenticated user: {} (id={}), roles: {}", username, userId, authorities);
             }
         } catch (Exception ex) {
             log.error("Could not set user authentication in security context", ex);
