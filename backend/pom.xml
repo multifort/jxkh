@@ -75,7 +75,7 @@
             <artifactId>mysql-connector-j</artifactId>
         </dependency>
 
-        <!-- Redis -->
+        <!-- Redis (使用默认的 Lettuce 客户端) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
