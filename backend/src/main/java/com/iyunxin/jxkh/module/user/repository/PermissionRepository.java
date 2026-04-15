@@ -24,4 +24,9 @@ public interface PermissionRepository extends JpaRepository<Permission, Long> {
     @Query("SELECT p.code FROM Permission p JOIN RolePermission rp ON p.id = rp.permissionId " +
            "WHERE rp.roleId IN :roleIds AND p.isDeleted = false")
     List<String> findCodesByRoleIds(@Param("roleIds") List<Long> roleIds);
+
+    /**
+     * 检查权限代码是否存在
+     */
+    boolean existsByCode(String code);
 }

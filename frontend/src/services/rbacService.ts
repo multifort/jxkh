@@ -184,11 +184,42 @@ export const permissionService = {
   },
 
   /**
+   * 获取权限详情
+   */
+  getPermissionById: async (id: number): Promise<Permission> => {
+    const response = await request.get<ApiResponse<Permission>>(`/permissions/${id}`);
+    return response.data.data;
+  },
+
+  /**
    * 检查用户权限
    */
   checkPermission: async (code: string): Promise<boolean> => {
-    const response = await request.get<ApiResponse<{ code: string; hasPermission: boolean }>>(`/permissions/check`, { params: { code } });
+    const response = await request.get<ApiResponse<{ code: string; hasPermission: boolean }>>('/permissions/check', { params: { code } });
     return response.data.data?.hasPermission || false;
+  },
+
+  /**
+   * 创建权限
+   */
+  createPermission: async (data: Partial<Permission>): Promise<Permission> => {
+    const response = await request.post<ApiResponse<Permission>>('/permissions', data);
+    return response.data.data;
+  },
+
+  /**
+   * 更新权限
+   */
+  updatePermission: async (id: number, data: Partial<Permission>): Promise<Permission> => {
+    const response = await request.put<ApiResponse<Permission>>(`/permissions/${id}`, data);
+    return response.data.data;
+  },
+
+  /**
+   * 删除权限
+   */
+  deletePermission: async (id: number): Promise<void> => {
+    await request.delete<ApiResponse<void>>(`/permissions/${id}`);
   },
 };
 

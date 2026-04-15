@@ -6,6 +6,7 @@ import {
   TeamOutlined,
   UserOutlined,
   SecurityScanOutlined,
+  KeyOutlined,
   LogoutOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
@@ -55,6 +56,11 @@ const MainLayout: React.FC = () => {
           key: '/settings/roles',
           icon: <SecurityScanOutlined />,
           label: '角色管理',
+        },
+        {
+          key: '/settings/permissions',
+          icon: <KeyOutlined />,
+          label: '权限管理',
         },
       ],
     },

@@ -27,6 +27,7 @@ export interface Permission {
   path?: string;
   createdAt: string;
   updatedAt: string;
+  isDeleted: boolean;
 }
 
 /**

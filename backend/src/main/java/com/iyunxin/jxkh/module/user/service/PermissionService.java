@@ -5,8 +5,10 @@ import com.iyunxin.jxkh.module.user.repository.PermissionRepository;
 import com.iyunxin.jxkh.module.user.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -89,5 +91,69 @@ public class PermissionService {
             }
         }
         return true;
+    }
+
+    /**
+     * 创建权限
+     */
+    @Transactional
+    @CacheEvict(value = "permissions", key = "'all'")
+    public Permission createPermission(Permission permission) {
+        // 校验 code 唯一性
+        if (permissionRepository.existsByCode(permission.getCode())) {
+            throw new RuntimeException("权限代码已存在: " + permission.getCode());
+        }
+        
+        permission.setIsDeleted(false);
+        Permission saved = permissionRepository.save(permission);
+        log.info("创建权限成功: {} ({})", saved.getName(), saved.getCode());
+        return saved;
+    }
+
+    /**
+     * 更新权限
+     */
+    @Transactional
+    @CacheEvict(value = {"permissions", "userPermissions"}, allEntries = true)
+    public Permission updatePermission(Long id, Permission permission) {
+        Permission existing = getPermissionById(id);
+        
+        // 不允许修改 code（保持唯一性）
+        if (!existing.getCode().equals(permission.getCode())) {
+            throw new RuntimeException("不允许修改权限代码");
+        }
+        
+        existing.setName(permission.getName());
+        existing.setType(permission.getType());
+        existing.setResource(permission.getResource());
+        existing.setParentId(permission.getParentId());
+        existing.setSort(permission.getSort());
+        existing.setIcon(permission.getIcon());
+        existing.setPath(permission.getPath());
+        
+        Permission updated = permissionRepository.save(existing);
+        log.info("更新权限成功: {} ({})", updated.getName(), updated.getCode());
+        return updated;
+    }
+
+    /**
+     * 删除权限（逻辑删除）
+     */
+    @Transactional
+    @CacheEvict(value = {"permissions", "userPermissions"}, allEntries = true)
+    public void deletePermission(Long id) {
+        Permission permission = getPermissionById(id);
+        permission.setIsDeleted(true);
+        permissionRepository.save(permission);
+        log.info("删除权限成功: {} ({})", permission.getName(), permission.getCode());
+    }
+
+    /**
+     * 获取权限详情
+     */
+    public Permission getPermissionById(Long id) {
+        return permissionRepository.findById(id)
+                .filter(p -> !p.getIsDeleted())
+                .orElseThrow(() -> new RuntimeException("权限不存在: " + id));
     }
 }
