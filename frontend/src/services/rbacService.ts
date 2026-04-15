@@ -67,26 +67,29 @@ export const userService = {
     orgId?: number;
     role?: string;
   }): Promise<any> => {
-    const response = await request.get<any>('/users', { params });
+    const response = await request.get<ApiResponse<any>>('/users', { params });
     console.log('用户列表原始响应:', response);
     
-    // 如果返回的是数组（没有包装在 ApiResponse 中）
-    if (Array.isArray(response.data)) {
+    // response.data 是 ApiResponse 对象，需要访问 data 字段
+    const apiResponse = response.data;
+    
+    // 如果 data 是数组（没有包装在分页对象中）
+    if (Array.isArray(apiResponse.data)) {
       return {
-        content: response.data,
-        totalElements: response.data.length,
+        content: apiResponse.data,
+        totalElements: apiResponse.data.length,
         totalPages: 1,
         number: params.page || 0,
         size: params.size || 10,
       };
     }
     
-    // 如果已经是分页格式
-    if (response.data && response.data.content) {
-      return response.data;
+    // 如果 data 是分页对象
+    if (apiResponse.data && apiResponse.data.content) {
+      return apiResponse.data;
     }
     
-    // 其他情况
+    // 其他情况返回空分页对象
     return {
       content: [],
       totalElements: 0,
