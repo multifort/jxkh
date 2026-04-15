@@ -68,7 +68,9 @@ export const userService = {
     role?: string;
   }): Promise<any> => {
     const response = await request.get<any>('/users', { params });
-    // 如果返回的是数组，转换为分页格式
+    console.log('用户列表原始响应:', response);
+    
+    // 如果返回的是数组（没有包装在 ApiResponse 中）
     if (Array.isArray(response.data)) {
       return {
         content: response.data,
@@ -78,8 +80,20 @@ export const userService = {
         size: params.size || 10,
       };
     }
+    
     // 如果已经是分页格式
-    return response.data;
+    if (response.data && response.data.content) {
+      return response.data;
+    }
+    
+    // 其他情况
+    return {
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      number: params.page || 0,
+      size: params.size || 10,
+    };
   },
 
   /**

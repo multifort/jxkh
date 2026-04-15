@@ -43,6 +43,7 @@ const UserManagePage: React.FC = () => {
         size,
         ...searchParams,
       });
+      console.log('用户列表数据:', data);
       setUsers(data.content || []);
       setPagination({
         current: page,
@@ -50,6 +51,7 @@ const UserManagePage: React.FC = () => {
         total: data.totalElements || 0,
       });
     } catch (error: any) {
+      console.error('加载用户列表失败:', error);
       message.error(error.message || '加载用户列表失败');
     } finally {
       setLoading(false);
