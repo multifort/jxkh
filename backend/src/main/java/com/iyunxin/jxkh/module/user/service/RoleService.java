@@ -4,6 +4,7 @@ import com.iyunxin.jxkh.module.user.domain.Role;
 import com.iyunxin.jxkh.module.user.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ public class RoleService {
      * 创建角色
      */
     @Transactional
+    @CacheEvict(value = "roles", allEntries = true)
     public Role createRole(Role role) {
         // 检查 code 是否已存在
         if (roleRepository.findByCode(role.getCode()).isPresent()) {
@@ -53,6 +55,7 @@ public class RoleService {
      * 更新角色
      */
     @Transactional
+    @CacheEvict(value = "roles", allEntries = true)
     public Role updateRole(Long roleId, Role role) {
         Role existing = getRoleById(roleId);
         
@@ -68,6 +71,7 @@ public class RoleService {
      * 删除角色（逻辑删除）
      */
     @Transactional
+    @CacheEvict(value = "roles", allEntries = true)
     public void deleteRole(Long roleId) {
         Role role = getRoleById(roleId);
         role.setIsDeleted(true);
