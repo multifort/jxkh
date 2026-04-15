@@ -57,10 +57,9 @@ public class RoleService {
         Role existing = getRoleById(roleId);
         
         existing.setName(role.getName());
-        existing.setCode(role.getCode());
         existing.setDescription(role.getDescription());
-        existing.setRoleType(role.getRoleType());
-        existing.setSortOrder(role.getSortOrder());
+        existing.setSort(role.getSort());
+        existing.setEnabled(role.getEnabled());
         
         return roleRepository.save(existing);
     }
