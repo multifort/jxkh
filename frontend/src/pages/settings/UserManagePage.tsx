@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { 
   Card, Table, Button, Modal, Form, Input, Select, message, Space, 
   Popconfirm, Tag, Switch, InputNumber, Tooltip 
@@ -33,9 +33,14 @@ const UserManagePage: React.FC = () => {
     orgId?: number;
     role?: string;
   }>({});
+  
+  // 防止 StrictMode 下的重复请求
+  const isMounted = useRef(true);
 
   // 加载用户列表
   const loadUsers = async (page = 1, size = 10) => {
+    if (!isMounted.current) return; // 如果组件已卸载，不执行请求
+    
     try {
       setLoading(true);
       const data = await userService.getUsers({
@@ -44,17 +49,23 @@ const UserManagePage: React.FC = () => {
         ...searchParams,
       });
       console.log('用户列表数据:', data);
-      setUsers(data.content || []);
-      setPagination({
-        current: page,
-        pageSize: size,
-        total: data.totalElements || 0,
-      });
+      if (isMounted.current) { // 再次检查，防止竞态条件
+        setUsers(data.content || []);
+        setPagination({
+          current: page,
+          pageSize: size,
+          total: data.totalElements || 0,
+        });
+      }
     } catch (error: any) {
       console.error('加载用户列表失败:', error);
-      message.error(error.message || '加载用户列表失败');
+      if (isMounted.current) {
+        message.error(error.message || '加载用户列表失败');
+      }
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -79,9 +90,14 @@ const UserManagePage: React.FC = () => {
   };
 
   useEffect(() => {
+    isMounted.current = true;
     loadUsers();
     loadRoles();
     loadOrgs();
+    
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   // 搜索
