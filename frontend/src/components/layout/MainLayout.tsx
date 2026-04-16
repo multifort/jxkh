@@ -8,6 +8,8 @@ import {
   SecurityScanOutlined,
   KeyOutlined,
   LogoutOutlined,
+  CalendarOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -36,6 +38,23 @@ const MainLayout: React.FC = () => {
       key: '/',
       icon: <DashboardOutlined />,
       label: '首页',
+    },
+    {
+      key: '/performance',
+      icon: <CalendarOutlined />,
+      label: '绩效管理',
+      children: [
+        {
+          key: '/performance/cycles',
+          icon: <CalendarOutlined />,
+          label: '周期管理',
+        },
+        {
+          key: '/performance/indicators',
+          icon: <AppstoreOutlined />,
+          label: '指标库',
+        },
+      ],
     },
     {
       key: '/settings',
