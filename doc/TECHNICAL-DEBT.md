@@ -115,6 +115,115 @@
 
 ---
 
+### 17. 绩效模块 Service 层代码重复 【Sprint2】
+**优先级**: P1  
+**状态**: 待优化  
+**发现时间**: 2026-04-17  
+**描述**: CycleService、IndicatorService、WeightSchemeService、IndicatorCategoryService 中存在大量重复的数据权限控制代码  
+**影响范围**: 
+- `CycleService.java` (334行)
+- `IndicatorService.java` (277行)
+- `WeightSchemeService.java` (399行)
+- `IndicatorCategoryService.java` (278行)
+
+**重复代码**:
+```java
+// 每个 Service 都有相同的 getCurrentUser() 方法
+// 每个 Service 都有相同的 getSubOrgIds() 递归方法
+// 每个 Service 都有相同的 applyDataPermission() 和 checkDataPermission() 逻辑
+```
+
+**建议方案**:
+1. 提取基类 `BaseDataService`，封装通用的数据权限逻辑
+2. 使用 AOP 切面统一处理数据权限校验
+3. 创建 `DataPermissionHelper` 工具类
+
+**预计工作量**: 2-3 天  
+**风险评估**: 低（重构不影响功能）
+
+---
+
+### 18. 周期时间冲突检测性能问题 【Sprint2】
+**优先级**: P1  
+**状态**: 待优化  
+**发现时间**: 2026-04-17  
+**描述**: `CycleService.checkDateConflict()` 方法在检测到冲突后，使用 stream 遍历所有周期进行二次确认，性能较差  
+**位置**: `CycleService.java:268-272`
+
+**当前实现**:
+```java
+PerformanceCycle conflictingCycle = cycleRepository.findByIsDeletedFalse().stream()
+    .filter(c -> !c.getId().equals(excludeId))
+    .filter(c -> !c.getStartDate().isAfter(endDate) && !c.getEndDate().isBefore(startDate))
+    .findFirst()
+    .orElse(null);
+```
+
+**问题**:
+- 加载所有周期到内存
+- O(n) 时间复杂度
+- 大数据量时性能差
+
+**建议方案**:
+1. 在 Repository 层添加精确查询方法
+2. 使用数据库层面的时间范围重叠判断
+3. 添加索引优化查询
+
+**预计工作量**: 0.5 天  
+**风险评估**: 低
+
+---
+
+### 19. 指标分类层级计算缺少循环引用检测 【Sprint2】
+**优先级**: P1  
+**状态**: 待修复  
+**发现时间**: 2026-04-17  
+**描述**: `IndicatorCategoryService` 在更新父分类时，没有检测循环引用（如 A->B->A）  
+**位置**: `IndicatorCategoryService.java:157-165`
+
+**风险场景**:
+```
+分类A的parentId = B
+分类B的parentId = A  // 形成循环引用
+```
+
+**建议方案**:
+1. 在设置 parentId 前，检查是否会导致循环引用
+2. 使用 DFS/BFS 算法检测环路
+3. 添加数据库约束或触发器
+
+**预计工作量**: 1 天  
+**风险评估**: 中（可能导致数据不一致）
+
+---
+
+### 20. 权重方案复制时使用时间戳作为编码后缀 【Sprint2】
+**优先级**: P1  
+**状态**: 待优化  
+**发现时间**: 2026-04-17  
+**描述**: `WeightSchemeService.copyScheme()` 使用 `System.currentTimeMillis()` 生成编码后缀，可读性差且可能冲突  
+**位置**: `WeightSchemeService.java:274`
+
+**当前实现**:
+```java
+newScheme.setCode(source.getCode() + "_COPY_" + System.currentTimeMillis());
+```
+
+**问题**:
+- 编码不友好（如：WS001_COPY_1713340800000）
+- 高并发下可能产生相同时间戳
+- 不利于人工识别和管理
+
+**建议方案**:
+1. 使用 UUID 短格式（8位）
+2. 或使用自增序号（WS001_COPY_1, WS001_COPY_2）
+3. 或允许用户自定义复制后的编码
+
+**预计工作量**: 0.5 天  
+**风险评估**: 低
+
+---
+
 ## P2 - 低优先级（体验优化）
 
 ### 8. E2E 测试
@@ -190,6 +299,109 @@
 
 ---
 
+### 21. 前端页面缺少错误边界处理 【Sprint2】
+**优先级**: P2  
+**状态**: 待优化  
+**发现时间**: 2026-04-17  
+**描述**: CycleManagePage、IndicatorManagePage、WeightSchemeManagePage 缺少 React Error Boundary，组件错误会导致整个页面白屏  
+**影响范围**: 
+- `frontend/src/pages/performance/CycleManagePage.tsx`
+- `frontend/src/pages/performance/IndicatorManagePage.tsx`
+- `frontend/src/pages/performance/WeightSchemeManagePage.tsx`
+
+**建议方案**:
+1. 创建通用 ErrorBoundary 组件
+2. 在每个页面外层包裹 ErrorBoundary
+3. 显示友好的错误提示和重试按钮
+
+**预计工作量**: 0.5 天  
+**风险评估**: 低
+
+---
+
+### 22. 前端表格分页参数不一致 【Sprint2】
+**优先级**: P2  
+**状态**: 待优化  
+**发现时间**: 2026-04-17  
+**描述**: 前端分页从 1 开始，后端分页从 0 开始，每次请求都需要手动转换，容易出错  
+**位置**: `CycleManagePage.tsx:39`, `cycleService.ts:18`
+
+**当前实现**:
+```typescript
+// 前端
+const response = await cycleService.getCycles(page - 1, size, ...);
+
+// 后端
+public Page<PerformanceCycle> getCycles(int page, int size, ...) {
+    Pageable pageable = PageRequest.of(page, size, ...); // page 从 0 开始
+}
+```
+
+**建议方案**:
+1. 统一前后端分页规范（建议都从 0 开始）
+2. 或在 API Client 层自动转换
+3. 或创建统一的 usePagination Hook
+
+**预计工作量**: 0.5 天  
+**风险评估**: 中（需要修改多个页面）
+
+---
+
+### 23. 数据库迁移脚本缺少回滚脚本 【Sprint2】
+**优先级**: P2  
+**状态**: 待补充  
+**发现时间**: 2026-04-17  
+**描述**: V5-V8 迁移脚本只有正向迁移，没有对应的 U* 回滚脚本  
+**影响范围**: 
+- `V5__create_performance_cycles.sql`
+- `V6__create_indicators.sql`
+- `V7__create_weight_schemes.sql`
+- `V8__insert_sprint2_test_data.sql`
+
+**风险**:
+- 生产环境部署失败时无法快速回滚
+- 测试环境数据污染后难以清理
+
+**建议方案**:
+1. 为每个 V* 脚本创建对应的 U* 回滚脚本
+2. 或使用 Flyway Undo 功能
+3. 或在部署前备份数据
+
+**预计工作量**: 1 天  
+**风险评估**: 中
+
+---
+
+### 24. 指标表缺少外键约束 【Sprint2】
+**优先级**: P2  
+**状态**: 待优化  
+**发现时间**: 2026-04-17  
+**描述**: `indicators.category_id` 字段没有外键约束，可能导致引用不存在的分类  
+**位置**: `V6__create_indicators.sql:27`
+
+**当前表结构**:
+```sql
+CREATE TABLE `indicators` (
+  `category_id` BIGINT NOT NULL COMMENT '分类ID',
+  -- 缺少 FOREIGN KEY 约束
+)
+```
+
+**风险**:
+- 数据完整性无法保证
+- 可能产生孤儿记录
+- 查询时可能 JOIN 失败
+
+**建议方案**:
+1. 添加外键约束：`FOREIGN KEY (category_id) REFERENCES indicator_categories(id)`
+2. 或在应用层加强校验
+3. 或定期运行数据一致性检查任务
+
+**预计工作量**: 0.5 天  
+**风险评估**: 中（需要检查现有数据）
+
+---
+
 ## P3 - 长期改进
 
 ### 13. 微服务架构改造
@@ -253,17 +465,20 @@
 | 优先级 | 数量 | 已完成 | 进行中 | 未开始 |
 |--------|------|--------|--------|--------|
 | P0 | 4 | 4 | 0 | 0 |
-| P1 | 3 | 1 | 0 | 2 |
-| P2 | 5 | 0 | 0 | 5 |
+| P1 | 7 | 1 | 0 | 6 |
+| P2 | 9 | 0 | 0 | 9 |
 | P3 | 4 | 0 | 0 | 4 |
-| **总计** | **16** | **5** | **0** | **11** |
+| **总计** | **24** | **5** | **0** | **19** |
 
-**完成率**: 31.25% (5/16)
+**完成率**: 20.83% (5/24)
+
+**Sprint2 新增**: 8 项技术债务（P1: 4项, P2: 4项）
 
 ---
 
 ## 📝 更新记录
 
+- **2026-04-17**: Sprint2 Code Review 完成，新增 8 项技术债务（Sprint2 模块）
 - **2026-04-15**: 创建文档，标记 Sprint 1 完成的4个P0任务
 - **2026-04-15**: 记录剩余的技术债务项
 - **2026-04-15**: 修复 AuthServiceTest 编译错误，完善数据权限获取用户ID
