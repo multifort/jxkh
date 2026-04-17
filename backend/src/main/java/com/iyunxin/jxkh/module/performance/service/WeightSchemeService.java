@@ -104,11 +104,13 @@ public class WeightSchemeService {
         }
         
         // 设置默认值
+        LocalDateTime now = LocalDateTime.now();
         scheme.setVersion(1);
         scheme.setStatus(WeightSchemeStatus.DRAFT);
         scheme.setTotalWeight(BigDecimal.ZERO);
         scheme.setCreatedBy(currentUser.getId());
-        scheme.setCreatedAt(LocalDateTime.now());
+        scheme.setCreatedAt(now);
+        scheme.setUpdatedAt(now);
         scheme.setIsDeleted(false);
         
         return schemeRepository.save(scheme);
