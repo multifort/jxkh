@@ -9,13 +9,12 @@ import {
   message,
   Space,
   Table,
-  Input,
   Alert,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
+import { DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import { planService } from '../../services/planService';
 import { cycleService } from '../../services/cycleService';
-import { indicatorService } from '../../services/indicatorService';
+import { indicatorApi } from '../../services/indicatorService';
 import type { PerformanceCycle } from '../../types/performance';
 import type { Indicator } from '../../types/performance';
 import type { IndicatorItemRequest } from '../../types/performance';
@@ -65,9 +64,9 @@ const PlanCreatePage: React.FC = () => {
 
   const loadCycles = async () => {
     try {
-      const response = await cycleService.listCycles({ page: 0, size: 100 });
-      if (response.code === 200 && response.data) {
-        setCycles(response.data.content || []);
+      const response = await cycleService.getCycles(0, 100);
+      if (response.data?.data) {
+        setCycles(response.data.data.content || []);
       }
     } catch (error) {
       message.error('加载周期列表失败');
@@ -76,9 +75,9 @@ const PlanCreatePage: React.FC = () => {
 
   const loadIndicators = async () => {
     try {
-      const response = await indicatorService.listIndicators({ page: 0, size: 100 });
-      if (response.code === 200 && response.data) {
-        setIndicators(response.data.content || []);
+      const response = await indicatorApi.list(undefined, undefined, undefined, undefined, 0, 100);
+      if (response.data?.data) {
+        setIndicators(response.data.data.content || []);
       }
     } catch (error) {
       message.error('加载指标列表失败');
@@ -197,19 +196,15 @@ const PlanCreatePage: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await planService.createPlan({
+      await planService.createPlan({
         userId: 1, // TODO: 从当前用户获取
         cycleId,
         indicators: selectedIndicators,
       });
 
-      if (response.code === 200) {
-        message.success('计划创建成功');
-        localStorage.removeItem('plan_draft');
-        // TODO: 跳转到计划详情页
-      } else {
-        message.error(response.message || '创建失败');
-      }
+      message.success('计划创建成功');
+      localStorage.removeItem('plan_draft');
+      // TODO: 跳转到计划详情页
     } catch (error: any) {
       message.error(error.response?.data?.message || '创建失败');
     } finally {
