@@ -280,8 +280,10 @@ public class WeightSchemeService {
         newScheme.setTotalWeight(BigDecimal.ZERO);
         
         User currentUser = getCurrentUser();
+        LocalDateTime now = LocalDateTime.now();
         newScheme.setCreatedBy(currentUser.getId());
-        newScheme.setCreatedAt(LocalDateTime.now());
+        newScheme.setCreatedAt(now);
+        newScheme.setUpdatedAt(now);
         newScheme.setIsDeleted(false);
         
         WeightScheme saved = schemeRepository.save(newScheme);
