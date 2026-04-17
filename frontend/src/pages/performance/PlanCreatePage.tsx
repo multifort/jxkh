@@ -65,10 +65,17 @@ const PlanCreatePage: React.FC = () => {
   const loadCycles = async () => {
     try {
       const response = await cycleService.getCycles(0, 100);
-      // cycleService returns response.data (ApiResponse), so response.data.data.content is the array
-      if (response.data?.data?.content) {
-        setCycles(response.data.data.content);
-      }
+      console.log('周期API响应:', response);
+      
+      // cycleService返回response.data (ApiResponse)，所以response.data.data.content是周期数组
+      const cyclesData = response.data?.data?.content || [];
+      console.log('原始周期数据:', cyclesData);
+      
+      // 只显示进行中的周期（过滤掉DRAFT和ENDED）
+      const activeCycles = cyclesData.filter((cycle: any) => cycle.status === 'IN_PROGRESS');
+      console.log('过滤后的周期数据:', activeCycles);
+      
+      setCycles(activeCycles);
     } catch (error) {
       console.error('加载周期列表失败', error);
       message.error('加载周期列表失败');
