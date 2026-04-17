@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/auth/LoginPage';
 import MainLayout from './components/layout/MainLayout';
+import CycleManagePage from './pages/performance/CycleManagePage';
+import IndicatorManagePage from './pages/performance/IndicatorManagePage';
+import WeightSchemeManagePage from './pages/performance/WeightSchemeManagePage';
 import OrgManagePage from './pages/settings/OrgManagePage';
 import RoleManagePage from './pages/settings/RoleManagePage';
 import UserManagePage from './pages/settings/UserManagePage';
@@ -48,6 +51,9 @@ function App() {
           }
         >
           <Route index element={<HomePage />} />
+          <Route path="performance/cycles" element={<CycleManagePage />} />
+          <Route path="performance/indicators" element={<IndicatorManagePage />} />
+          <Route path="performance/weight-schemes" element={<WeightSchemeManagePage />} />
           <Route path="settings/org-manage" element={<OrgManagePage />} />
           <Route path="settings/user-manage" element={<UserManagePage />} />
           <Route path="settings/roles" element={<RoleManagePage />} />

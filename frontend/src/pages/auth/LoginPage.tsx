@@ -16,8 +16,8 @@ const LoginPage: React.FC = () => {
       const response = await authService.login(values);
       
       // 保存 Token 和用户信息
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      localStorage.setItem('accessToken', response.accessToken || '');
+      localStorage.setItem('refreshToken', response.refreshToken || '');
       localStorage.setItem('user', JSON.stringify(response.user));
       
       message.success('登录成功');

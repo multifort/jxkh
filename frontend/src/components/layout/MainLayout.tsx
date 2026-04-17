@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout, Menu, theme } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -8,6 +8,9 @@ import {
   SecurityScanOutlined,
   KeyOutlined,
   LogoutOutlined,
+  CalendarOutlined,
+  AppstoreOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -21,6 +24,29 @@ const MainLayout: React.FC = () => {
   } = theme.useToken();
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  // 定义父级菜单及其子路径映射
+  const parentMap: Record<string, string[]> = {
+    '/performance': ['/performance/cycles', '/performance/indicators', '/performance/weight-schemes'],
+    '/settings': ['/settings/org-manage', '/settings/user-manage', '/settings/roles', '/settings/permissions'],
+  };
+
+  // 获取当前路径对应的父级菜单key
+  const getDefaultOpenKeys = (pathname: string): string[] => {
+    const parentKey = Object.keys(parentMap).find(parent => 
+      parentMap[parent].includes(pathname)
+    );
+    return parentKey ? [parentKey] : [];
+  };
+
+  // 使用函数式初始化，确保首次渲染时就有正确的openKeys
+  const [openKeys, setOpenKeys] = useState<string[]>(() => getDefaultOpenKeys(location.pathname));
+
+  // 监听路由变化，更新展开状态
+  useEffect(() => {
+    const newOpenKeys = getDefaultOpenKeys(location.pathname);
+    setOpenKeys(newOpenKeys);
+  }, [location.pathname]);
 
   const handleMenuClick: MenuProps['onClick'] = (e) => {
     navigate(e.key);
@@ -36,6 +62,28 @@ const MainLayout: React.FC = () => {
       key: '/',
       icon: <DashboardOutlined />,
       label: '首页',
+    },
+    {
+      key: '/performance',
+      icon: <CalendarOutlined />,
+      label: '绩效管理',
+      children: [
+        {
+          key: '/performance/cycles',
+          icon: <CalendarOutlined />,
+          label: '周期管理',
+        },
+        {
+          key: '/performance/indicators',
+          icon: <AppstoreOutlined />,
+          label: '指标库',
+        },
+        {
+          key: '/performance/weight-schemes',
+          icon: <SettingOutlined />,
+          label: '权重配置',
+        },
+      ],
     },
     {
       key: '/settings',
@@ -88,7 +136,8 @@ const MainLayout: React.FC = () => {
           theme="dark"
           mode="inline"
           selectedKeys={[location.pathname]}
-          defaultOpenKeys={['/settings']}
+          openKeys={openKeys}
+          onOpenChange={setOpenKeys}
           items={menuItems}
           onClick={handleMenuClick}
         />
