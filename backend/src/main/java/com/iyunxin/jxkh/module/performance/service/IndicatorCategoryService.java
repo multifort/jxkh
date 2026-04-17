@@ -154,7 +154,9 @@ public class IndicatorCategoryService {
         existing.setUpdatedAt(LocalDateTime.now());
         
         // 如果修改了父分类，重新计算层级
-        if (!existing.getParentId().equals(category.getParentId())) {
+        boolean parentIdChanged = (existing.getParentId() == null && category.getParentId() != null) ||
+                                  (existing.getParentId() != null && !existing.getParentId().equals(category.getParentId()));
+        if (parentIdChanged) {
             if (existing.getParentId() == null) {
                 existing.setLevel(1);
             } else {
