@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, message, Tag, Popconfirm, Row, Col, Progress, Divider } from 'antd';
+const { Compact } = Space;
 import { PlusOutlined, EditOutlined, DeleteOutlined, SendOutlined, InboxOutlined, CopyOutlined, LeftOutlined } from '@ant-design/icons';
 import { weightSchemeApi } from '../../services/weightSchemeService';
 import { indicatorApi } from '../../services/indicatorService';
@@ -455,15 +456,17 @@ const WeightSchemeManagePage: React.FC = () => {
                             <strong>{indicator.name}</strong>
                           </Col>
                           <Col span={8}>
-                            <Input
-                              type="number"
-                              min={0}
-                              max={100}
-                              value={item.weight}
-                              onChange={(e) => handleUpdateWeight(item.indicatorId, parseFloat(e.target.value) || 0)}
-                              addonAfter="%"
-                              style={{ width: '100%' }}
-                            />
+                            <Compact style={{ width: '100%' }}>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={item.weight}
+                                onChange={(e) => handleUpdateWeight(item.indicatorId, parseFloat(e.target.value) || 0)}
+                                style={{ width: 'calc(100% - 40px)' }}
+                              />
+                              <Input style={{ width: 40, textAlign: 'center' }} value="%" disabled />
+                            </Compact>
                           </Col>
                           <Col>
                             <Button
