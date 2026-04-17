@@ -144,6 +144,11 @@ public class IndicatorCategoryService {
             throw new BusinessException("INVALID_PARENT_CATEGORY", "父分类不能是自己");
         }
         
+        // 检查循环引用
+        if (category.getParentId() != null) {
+            checkCircularReference(id, category.getParentId());
+        }
+        
         // 更新字段
         existing.setName(category.getName());
         existing.setCode(category.getCode());
@@ -239,6 +244,43 @@ public class IndicatorCategoryService {
             if (!hasAccess) {
                 throw new BusinessException("PERMISSION_DENIED", "无权访问该分类");
             }
+        }
+    }
+    
+    /**
+     * 检查循环引用（防止 A->B->A 的情况）
+     * @param categoryId 当前分类ID
+     * @param newParentId 新的父分类ID
+     */
+    private void checkCircularReference(Long categoryId, Long newParentId) {
+        if (newParentId == null) {
+            return;
+        }
+        
+        // 使用 BFS 遍历祖先节点，检查是否会形成环
+        java.util.Set<Long> visited = new java.util.HashSet<>();
+        Long currentId = newParentId;
+        
+        while (currentId != null) {
+            // 如果回到当前节点，说明有循环引用
+            if (currentId.equals(categoryId)) {
+                throw new BusinessException("CIRCULAR_REFERENCE", 
+                    "检测到循环引用：不能将分类设置为自己的子孙分类");
+            }
+            
+            // 如果已经访问过，说明有环（理论上不应该发生，但作为保护）
+            if (visited.contains(currentId)) {
+                throw new BusinessException("CIRCULAR_REFERENCE", 
+                    "检测到循环引用：分类树中存在环路");
+            }
+            
+            visited.add(currentId);
+            
+            // 继续向上查找父节点
+            IndicatorCategory parent = categoryRepository.findById(currentId)
+                .orElseThrow(() -> new BusinessException("PARENT_CATEGORY_NOT_FOUND", "父分类不存在"));
+            
+            currentId = parent.getParentId();
         }
     }
     

@@ -217,6 +217,36 @@ class IndicatorCategoryServiceTest {
     }
 
     @Test
+    @DisplayName("更新分类 - 检测到循环引用")
+    void testUpdateCategory_CircularReference() {
+        setCurrentUser(adminUser);
+
+        // 创建三级分类结构：A(1) -> B(2) -> C(3)
+        IndicatorCategory level3Category = new IndicatorCategory();
+        level3Category.setId(3L);
+        level3Category.setName("三级分类");
+        level3Category.setCode("LEVEL3");
+        level3Category.setParentId(2L);  // C的父是B
+        level3Category.setLevel(3);
+        level3Category.setOrgId(null);
+
+        // 尝试将 A 的父设置为 C，形成循环：A -> C -> B -> A
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(rootCategory));
+        when(categoryRepository.findById(3L)).thenReturn(Optional.of(level3Category));
+        when(categoryRepository.findById(2L)).thenReturn(Optional.of(childCategory));
+
+        IndicatorCategory updateData = new IndicatorCategory();
+        updateData.setParentId(3L);  // 试图将A的父设为C
+        updateData.setOrgId(null);
+
+        BusinessException exception = assertThrows(BusinessException.class, () -> {
+            categoryService.updateCategory(1L, updateData);
+        });
+
+        assertEquals("CIRCULAR_REFERENCE", exception.getCode());
+    }
+
+    @Test
     @DisplayName("删除分类 - 成功")
     void testDeleteCategory_Success() {
         setCurrentUser(adminUser);
