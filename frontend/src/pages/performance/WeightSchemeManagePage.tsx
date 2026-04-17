@@ -402,27 +402,27 @@ const WeightSchemeManagePage: React.FC = () => {
           )
         }
       >
-        {editMode === 'basic' ? (
-          <Form form={form} layout="vertical">
-            <Form.Item
-              name="name"
-              label="方案名称"
-              rules={[{ required: true, message: '请输入方案名称' }]}
-            >
-              <Input placeholder="请输入方案名称" />
-            </Form.Item>
-            <Form.Item
-              name="code"
-              label="方案编码"
-              rules={[{ required: true, message: '请输入方案编码' }]}
-            >
-              <Input placeholder="请输入方案编码" />
-            </Form.Item>
-            <Form.Item name="description" label="方案说明">
-              <TextArea rows={3} placeholder="请输入方案说明" />
-            </Form.Item>
-          </Form>
-        ) : (
+        <Form form={form} layout="vertical" style={{ display: editMode === 'basic' ? 'block' : 'none' }}>
+          <Form.Item
+            name="name"
+            label="方案名称"
+            rules={[{ required: true, message: '请输入方案名称' }]}
+          >
+            <Input placeholder="请输入方案名称" />
+          </Form.Item>
+          <Form.Item
+            name="code"
+            label="方案编码"
+            rules={[{ required: true, message: '请输入方案编码' }]}
+          >
+            <Input placeholder="请输入方案编码" />
+          </Form.Item>
+          <Form.Item name="description" label="方案说明">
+            <TextArea rows={3} placeholder="请输入方案说明" />
+          </Form.Item>
+        </Form>
+
+        {editMode === 'weight' && (
           <div>
             <Divider orientation="left">权重配置</Divider>
             <Row gutter={16}>
