@@ -23,28 +23,29 @@ const MainLayout: React.FC = () => {
     token: { colorBgContainer },
   } = theme.useToken();
 
-  const [openKeys, setOpenKeys] = useState<string[]>([]);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  // 根据当前路由自动展开对应的父级菜单
-  useEffect(() => {
-    const currentPath = location.pathname;
-    // 定义父级菜单及其子路径映射
-    const parentMap: Record<string, string[]> = {
-      '/performance': ['/performance/cycles', '/performance/indicators', '/performance/weight-schemes'],
-      '/settings': ['/settings/org-manage', '/settings/user-manage', '/settings/roles', '/settings/permissions'],
-    };
+  // 定义父级菜单及其子路径映射
+  const parentMap: Record<string, string[]> = {
+    '/performance': ['/performance/cycles', '/performance/indicators', '/performance/weight-schemes'],
+    '/settings': ['/settings/org-manage', '/settings/user-manage', '/settings/roles', '/settings/permissions'],
+  };
 
-    // 找到包含当前路径的父级菜单
+  // 获取当前路径对应的父级菜单key
+  const getDefaultOpenKeys = (pathname: string): string[] => {
     const parentKey = Object.keys(parentMap).find(parent => 
-      parentMap[parent].includes(currentPath)
+      parentMap[parent].includes(pathname)
     );
+    return parentKey ? [parentKey] : [];
+  };
 
-    if (parentKey) {
-      setOpenKeys([parentKey]);
-    } else {
-      setOpenKeys([]);
-    }
+  // 使用函数式初始化，确保首次渲染时就有正确的openKeys
+  const [openKeys, setOpenKeys] = useState<string[]>(() => getDefaultOpenKeys(location.pathname));
+
+  // 监听路由变化，更新展开状态
+  useEffect(() => {
+    const newOpenKeys = getDefaultOpenKeys(location.pathname);
+    setOpenKeys(newOpenKeys);
   }, [location.pathname]);
 
   const handleMenuClick: MenuProps['onClick'] = (e) => {
