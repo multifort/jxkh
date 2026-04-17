@@ -67,15 +67,32 @@ const PlanCreatePage: React.FC = () => {
       const response = await cycleService.getCycles(0, 100);
       console.log('周期API响应:', response);
       
-      // cycleService返回response.data (ApiResponse)，所以response.data.data.content是周期数组
-      const cyclesData = response.data?.data?.content || [];
+      // cycleService返回的是AxiosResponse.data，即{code, message, data, timestamp}
+      // response.data是分页对象{content, pageable, totalElements...}
+      const cyclesData = response.data?.content || [];
       console.log('原始周期数据:', cyclesData);
+      console.log('周期数量:', cyclesData.length);
+      
+      // 打印每个周期的状态
+      cyclesData.forEach((cycle: any) => {
+        console.log(`周期 ${cycle.id} - ${cycle.name}: status = ${cycle.status}`);
+      });
       
       // 只显示进行中的周期（过滤掉DRAFT和ENDED）
       const activeCycles = cyclesData.filter((cycle: any) => cycle.status === 'IN_PROGRESS');
       console.log('过滤后的周期数据:', activeCycles);
+      console.log('过滤后周期数量:', activeCycles.length);
       
       setCycles(activeCycles);
+      
+      // 临时调试：显示加载结果
+      if (cyclesData.length === 0) {
+        message.warning('API返回的周期数据为空');
+      } else if (activeCycles.length === 0) {
+        message.warning(`有${cyclesData.length}个周期，但没有状态为IN_PROGRESS的周期`);
+      } else {
+        message.success(`成功加载${activeCycles.length}个进行中周期`);
+      }
     } catch (error) {
       console.error('加载周期列表失败', error);
       message.error('加载周期列表失败');
@@ -85,7 +102,9 @@ const PlanCreatePage: React.FC = () => {
   const loadIndicators = async () => {
     try {
       const response = await indicatorApi.list(undefined, undefined, undefined, undefined, 0, 100);
-      // indicatorApi returns full AxiosResponse<ApiResponse<T>>, so response.data is ApiResponse
+      // indicatorApi返回的是完整AxiosResponse<ApiResponse<T>>
+      // response.data是ApiResponse{code, message, data}
+      // response.data.data是{content, totalElements}
       if (response.data?.data?.content) {
         setIndicators(response.data.data.content);
       }
