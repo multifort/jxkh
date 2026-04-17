@@ -290,7 +290,6 @@ public class WeightSchemeService {
         
         // 复制明细
         List<WeightSchemeItem> sourceItems = itemRepository.findBySchemeIdOrderBySortOrderAsc(id);
-        LocalDateTime now = LocalDateTime.now();
         for (WeightSchemeItem item : sourceItems) {
             WeightSchemeItem newItem = new WeightSchemeItem();
             newItem.setSchemeId(saved.getId());
