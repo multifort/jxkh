@@ -65,10 +65,12 @@ const PlanCreatePage: React.FC = () => {
   const loadCycles = async () => {
     try {
       const response = await cycleService.getCycles(0, 100);
-      if (response.data?.data) {
-        setCycles(response.data.data.content || []);
+      // cycleService returns response.data (ApiResponse), so response.data.data.content is the array
+      if (response.data?.data?.content) {
+        setCycles(response.data.data.content);
       }
     } catch (error) {
+      console.error('加载周期列表失败', error);
       message.error('加载周期列表失败');
     }
   };
@@ -76,8 +78,9 @@ const PlanCreatePage: React.FC = () => {
   const loadIndicators = async () => {
     try {
       const response = await indicatorApi.list(undefined, undefined, undefined, undefined, 0, 100);
-      if (response.data?.data) {
-        setIndicators(response.data.data.content || []);
+      // indicatorApi returns full AxiosResponse<ApiResponse<T>>, so response.data is ApiResponse
+      if (response.data?.data?.content) {
+        setIndicators(response.data.data.content);
       }
     } catch (error) {
       message.error('加载指标列表失败');
