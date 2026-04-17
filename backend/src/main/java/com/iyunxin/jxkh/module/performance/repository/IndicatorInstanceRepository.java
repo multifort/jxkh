@@ -1,0 +1,45 @@
+package com.iyunxin.jxkh.module.performance.repository;
+
+import com.iyunxin.jxkh.module.performance.domain.IndicatorInstance;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * 指标实例 Repository
+ */
+@Repository
+public interface IndicatorInstanceRepository extends JpaRepository<IndicatorInstance, Long>, JpaSpecificationExecutor<IndicatorInstance> {
+
+    /**
+     * 根据计划ID查询指标实例列表
+     */
+    List<IndicatorInstance> findByPlanIdAndIsDeletedFalse(Long planId);
+
+    /**
+     * 根据责任人ID查询指标实例列表
+     */
+    List<IndicatorInstance> findByOwnerIdAndIsDeletedFalse(Long ownerId);
+
+    /**
+     * 计算指定计划的权重总和
+     */
+    @Query("SELECT COALESCE(SUM(i.weight), 0) FROM IndicatorInstance i WHERE i.planId = :planId AND i.isDeleted = false")
+    BigDecimal sumWeightByPlanId(@Param("planId") Long planId);
+
+    /**
+     * 根据ID和删除状态查询
+     */
+    Optional<IndicatorInstance> findByIdAndIsDeletedFalse(Long id);
+
+    /**
+     * 批量删除（逻辑删除）
+     */
+    void deleteByPlanIdAndIsDeletedFalse(Long planId);
+}
