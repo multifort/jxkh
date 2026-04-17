@@ -11,6 +11,7 @@ import {
   CalendarOutlined,
   AppstoreOutlined,
   SettingOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -27,7 +28,7 @@ const MainLayout: React.FC = () => {
 
   // 定义父级菜单及其子路径映射
   const parentMap: Record<string, string[]> = {
-    '/performance': ['/performance/cycles', '/performance/indicators', '/performance/weight-schemes'],
+    '/performance': ['/performance/cycles', '/performance/indicators', '/performance/weight-schemes', '/performance/plans/create'],
     '/settings': ['/settings/org-manage', '/settings/user-manage', '/settings/roles', '/settings/permissions'],
   };
 
@@ -82,6 +83,11 @@ const MainLayout: React.FC = () => {
           key: '/performance/weight-schemes',
           icon: <SettingOutlined />,
           label: '权重配置',
+        },
+        {
+          key: '/performance/plans/create',
+          icon: <PlusOutlined />,
+          label: '创建计划',
         },
       ],
     },
