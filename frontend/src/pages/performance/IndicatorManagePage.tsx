@@ -29,8 +29,7 @@ const IndicatorManagePage: React.FC = () => {
     try {
       const res = await indicatorCategoryApi.getTree();
       // res.data is ApiResponse, res.data.data is the actual array
-      const categoriesData = res.data?.data;
-      console.log('Categories response:', res.data); // Debug log
+      const categoriesData = res.data.data;
       if (Array.isArray(categoriesData)) {
         setCategories(categoriesData);
       } else {

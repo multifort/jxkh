@@ -10,6 +10,7 @@ import {
   LogoutOutlined,
   CalendarOutlined,
   AppstoreOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -53,6 +54,11 @@ const MainLayout: React.FC = () => {
           key: '/performance/indicators',
           icon: <AppstoreOutlined />,
           label: '指标库',
+        },
+        {
+          key: '/performance/weight-schemes',
+          icon: <SettingOutlined />,
+          label: '权重配置',
         },
       ],
     },

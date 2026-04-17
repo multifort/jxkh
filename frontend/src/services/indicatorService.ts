@@ -1,6 +1,13 @@
 import request from './api';
 import type { IndicatorCategory, Indicator } from '../types/performance';
 
+// API 响应类型 - 后端统一返回 ApiResponse<T> { code, message, data }
+type ApiResponse<T> = {
+  code: number;
+  message: string;
+  data: T;
+};
+
 /**
  * 指标分类API
  */
@@ -9,7 +16,7 @@ export const indicatorCategoryApi = {
    * 分页查询分类列表
    */
   list(keyword?: string, parentId?: number, page = 0, size = 20) {
-    return request.get<{ content: IndicatorCategory[]; totalElements: number }>('/indicator-categories', {
+    return request.get<ApiResponse<{ content: IndicatorCategory[]; totalElements: number }>>('/indicator-categories', {
       params: { keyword, parentId, page, size }
     });
   },
@@ -18,35 +25,35 @@ export const indicatorCategoryApi = {
    * 获取分类树
    */
   getTree() {
-    return request.get<IndicatorCategory[]>('/indicator-categories/tree');
+    return request.get<ApiResponse<IndicatorCategory[]>>('/indicator-categories/tree');
   },
 
   /**
    * 根据ID获取分类
    */
   getById(id: number) {
-    return request.get<IndicatorCategory>(`/indicator-categories/${id}`);
+    return request.get<ApiResponse<IndicatorCategory>>(`/indicator-categories/${id}`);
   },
 
   /**
    * 创建分类
    */
   create(data: Partial<IndicatorCategory>) {
-    return request.post<IndicatorCategory>('/indicator-categories', data);
+    return request.post<ApiResponse<IndicatorCategory>>('/indicator-categories', data);
   },
 
   /**
    * 更新分类
    */
   update(id: number, data: Partial<IndicatorCategory>) {
-    return request.put<IndicatorCategory>(`/indicator-categories/${id}`, data);
+    return request.put<ApiResponse<IndicatorCategory>>(`/indicator-categories/${id}`, data);
   },
 
   /**
    * 删除分类
    */
   delete(id: number) {
-    return request.delete(`/indicator-categories/${id}`);
+    return request.delete<ApiResponse<void>>(`/indicator-categories/${id}`);
   }
 };
 
@@ -58,7 +65,7 @@ export const indicatorApi = {
    * 分页查询指标列表
    */
   list(keyword?: string, categoryId?: number, type?: string, status?: string, page = 0, size = 20) {
-    return request.get<{ content: Indicator[]; totalElements: number }>('/indicators', {
+    return request.get<ApiResponse<{ content: Indicator[]; totalElements: number }>>('/indicators', {
       params: { keyword, categoryId, type, status, page, size }
     });
   },
@@ -67,34 +74,34 @@ export const indicatorApi = {
    * 根据ID获取指标
    */
   getById(id: number) {
-    return request.get<Indicator>(`/indicators/${id}`);
+    return request.get<ApiResponse<Indicator>>(`/indicators/${id}`);
   },
 
   /**
    * 创建指标
    */
   create(data: Partial<Indicator>) {
-    return request.post<Indicator>('/indicators', data);
+    return request.post<ApiResponse<Indicator>>('/indicators', data);
   },
 
   /**
    * 更新指标
    */
   update(id: number, data: Partial<Indicator>) {
-    return request.put<Indicator>(`/indicators/${id}`, data);
+    return request.put<ApiResponse<Indicator>>(`/indicators/${id}`, data);
   },
 
   /**
    * 删除指标
    */
   delete(id: number) {
-    return request.delete(`/indicators/${id}`);
+    return request.delete<ApiResponse<void>>(`/indicators/${id}`);
   },
 
   /**
    * 启用/禁用指标
    */
   toggleStatus(id: number) {
-    return request.post<Indicator>(`/indicators/${id}/toggle-status`);
+    return request.post<ApiResponse<Indicator>>(`/indicators/${id}/toggle-status`);
   }
 };

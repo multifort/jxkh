@@ -112,3 +112,46 @@ export interface Indicator {
   updatedBy?: number | null;
   updatedAt: string;
 }
+
+/**
+ * 权重方案状态枚举
+ */
+export enum WeightSchemeStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  ARCHIVED = 'ARCHIVED'
+}
+
+/**
+ * 权重方案
+ */
+export interface WeightScheme {
+  id: number;
+  name: string;
+  code: string;
+  cycleId?: number | null;
+  orgId?: number | null;
+  version: number;
+  status: WeightSchemeStatus;
+  description?: string | null;
+  totalWeight: number;
+  publishedAt?: string | null;
+  publishedBy?: number | null;
+  createdBy: number;
+  createdAt: string;
+  updatedBy?: number | null;
+  updatedAt: string;
+}
+
+/**
+ * 权重方案明细
+ */
+export interface WeightSchemeItem {
+  id?: number;
+  schemeId: number;
+  indicatorId: number;
+  weight: number;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+}

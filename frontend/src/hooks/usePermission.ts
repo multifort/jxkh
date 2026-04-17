@@ -8,7 +8,6 @@ import { permissionService } from '@/services/rbacService';
  */
 export const usePermission = (permissionCode: string): boolean => {
   const [hasPermission, setHasPermission] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const checkPermission = async () => {
@@ -18,8 +17,6 @@ export const usePermission = (permissionCode: string): boolean => {
       } catch (error) {
         console.error('检查权限失败:', error);
         setHasPermission(false);
-      } finally {
-        setLoading(false);
       }
     };
 
