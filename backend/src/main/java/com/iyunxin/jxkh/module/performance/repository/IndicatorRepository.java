@@ -33,4 +33,9 @@ public interface IndicatorRepository extends JpaRepository<Indicator, Long>, Jpa
      * 根据状态查找
      */
     List<Indicator> findByStatusAndIsDeletedFalse(IndicatorStatus status);
+
+    /**
+     * 根据ID和删除状态查询
+     */
+    Optional<Indicator> findByIdAndIsDeletedFalse(Long id);
 }

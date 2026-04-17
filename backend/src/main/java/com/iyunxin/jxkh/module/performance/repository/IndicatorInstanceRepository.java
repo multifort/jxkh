@@ -39,7 +39,7 @@ public interface IndicatorInstanceRepository extends JpaRepository<IndicatorInst
     Optional<IndicatorInstance> findByIdAndIsDeletedFalse(Long id);
 
     /**
-     * 批量删除（逻辑删除）
+     * 批量查询指定计划的指标实例（用于优化N+1查询）
      */
-    void deleteByPlanIdAndIsDeletedFalse(Long planId);
+    List<IndicatorInstance> findByPlanIdInAndIsDeletedFalse(List<Long> planIds);
 }

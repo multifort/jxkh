@@ -40,6 +40,7 @@ public class PlanService {
     private final PerformanceCycleRepository cycleRepository;
     private final UserRepository userRepository;
     private final OrgRepository orgRepository;
+    private final com.iyunxin.jxkh.module.performance.repository.IndicatorRepository indicatorRepository;
 
     /**
      * 创建绩效计划
@@ -63,7 +64,10 @@ public class PlanService {
         // 4. 校验权重总和
         validateWeight(request.getIndicators());
 
-        // 5. 创建计划实体
+        // 5. 校验指标是否存在
+        validateIndicatorsExist(request.getIndicators());
+
+        // 6. 创建计划实体
         PerformancePlan plan = new PerformancePlan();
         plan.setUserId(request.getUserId());
         plan.setCycleId(request.getCycleId());
@@ -76,7 +80,7 @@ public class PlanService {
         PerformancePlan savedPlan = planRepository.save(plan);
         log.info("创建绩效计划成功: {}", savedPlan.getId());
 
-        // 6. 创建指标实例
+        // 7. 创建指标实例
         List<IndicatorInstance> instances = createIndicatorInstances(savedPlan.getId(), request.getIndicators(), currentUserId);
         instanceRepository.saveAll(instances);
 
@@ -101,10 +105,13 @@ public class PlanService {
         // 3. 校验权重总和
         validateWeight(request.getIndicators());
 
-        // 4. 删除旧的指标实例
-        instanceRepository.deleteByPlanIdAndIsDeletedFalse(planId);
+        // 4. 校验指标是否存在
+        validateIndicatorsExist(request.getIndicators());
 
-        // 5. 创建新的指标实例
+        // 5. 逻辑删除旧的指标实例
+        logicalDeleteInstances(planId);
+
+        // 6. 创建新的指标实例
         List<IndicatorInstance> instances = createIndicatorInstances(planId, request.getIndicators(), currentUserId);
         instanceRepository.saveAll(instances);
 
@@ -162,11 +169,21 @@ public class PlanService {
 
         Page<PerformancePlan> plans = planRepository.findAll(spec, pageable);
 
-        // 加载每个计划的指标实例
-        plans.getContent().forEach(plan -> {
-            List<IndicatorInstance> instances = instanceRepository.findByPlanIdAndIsDeletedFalse(plan.getId());
-            plan.setIndicators(instances);
-        });
+        // 批量加载指标实例（优化N+1查询）
+        if (!plans.getContent().isEmpty()) {
+            List<Long> planIds = plans.getContent().stream()
+                .map(PerformancePlan::getId)
+                .collect(Collectors.toList());
+            
+            List<IndicatorInstance> allInstances = instanceRepository.findByPlanIdInAndIsDeletedFalse(planIds);
+            java.util.Map<Long, List<IndicatorInstance>> instancesMap = allInstances.stream()
+                .collect(Collectors.groupingBy(IndicatorInstance::getPlanId));
+            
+            // 填充到每个计划
+            plans.getContent().forEach(plan -> {
+                plan.setIndicators(instancesMap.getOrDefault(plan.getId(), new ArrayList<>()));
+            });
+        }
 
         return plans;
     }
@@ -178,6 +195,30 @@ public class PlanService {
         boolean exists = planRepository.findByUserIdAndCycleIdAndIsDeletedFalse(userId, cycleId).isPresent();
         if (exists) {
             throw new BusinessException("PLAN_DUPLICATE", "该用户在此周期下已存在绩效计划");
+        }
+    }
+
+    /**
+     * 校验指标是否存在
+     */
+    private void validateIndicatorsExist(List<IndicatorItemRequest> indicators) {
+        for (IndicatorItemRequest item : indicators) {
+            indicatorRepository.findByIdAndIsDeletedFalse(item.getIndicatorId())
+                .orElseThrow(() -> new BusinessException("INDICATOR_NOT_FOUND", 
+                    "指标不存在: " + item.getIndicatorId()));
+        }
+    }
+
+    /**
+     * 逻辑删除指标实例
+     */
+    @Transactional
+    private void logicalDeleteInstances(Long planId) {
+        List<IndicatorInstance> instances = instanceRepository.findByPlanIdAndIsDeletedFalse(planId);
+        instances.forEach(instance -> instance.setIsDeleted(true));
+        if (!instances.isEmpty()) {
+            instanceRepository.saveAll(instances);
+            log.info("逻辑删除指标实例: planId={}, count={}", planId, instances.size());
         }
     }
 
