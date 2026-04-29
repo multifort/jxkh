@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Button, Modal, Form, Input, Select, message, Space, Tag, TreeSelect, Popconfirm } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, message, Space, Tag, TreeSelect, Popconfirm } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { permissionService } from '@/services/rbacService';
@@ -223,9 +223,10 @@ const PermissionManagePage: React.FC = () => {
   ];
 
   return (
-    <Card title="权限管理">
-      {/* 工具栏 */}
-      <div style={{ marginBottom: 16 }}>
+    <div>
+      {/* 操作栏 */}
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+        <div></div>
         <Space>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             新增权限
@@ -247,10 +248,10 @@ const PermissionManagePage: React.FC = () => {
           showSizeChanger: true,
           showTotal: (total) => `共 ${total} 条`,
         }}
-        scroll={{ x: 1200 }}
-      />
-
-      {/* 新增/编辑对话框 */}
+      scroll={{ x: 1200 }}
+    />
+    
+    {/* 新增/编辑对话框 */}
       <Modal
         title={editingPermission ? '编辑权限' : '新增权限'}
         open={modalVisible}
@@ -315,7 +316,7 @@ const PermissionManagePage: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
-    </Card>
+    </div>
   );
 };
 

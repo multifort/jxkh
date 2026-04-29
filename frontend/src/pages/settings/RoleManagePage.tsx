@@ -210,14 +210,15 @@ const RoleManagePage: React.FC = () => {
   ];
 
   return (
-    <Card
-      title="角色管理"
-      extra={
+    <div>
+      {/* 操作栏 */}
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+        <div></div>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
           新增角色
         </Button>
-      }
-    >
+      </div>
+
       <Table
         columns={columns}
         dataSource={roles}
@@ -228,10 +229,10 @@ const RoleManagePage: React.FC = () => {
           showSizeChanger: true,
           showTotal: (total) => `共 ${total} 条`,
         }}
-        scroll={{ x: 1200 }}
-      />
-
-      <Modal
+      scroll={{ x: 1200 }}
+    />
+    
+    <Modal
         title={editingRole ? '编辑角色' : '新增角色'}
         open={modalVisible}
         onOk={handleSubmit}
@@ -308,7 +309,7 @@ const RoleManagePage: React.FC = () => {
           }}
         />
       </Modal>
-    </Card>
+    </div>
   );
 };
 

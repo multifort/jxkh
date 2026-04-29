@@ -1,6 +1,6 @@
 import api from './api';
 import type {
-  PerformancePlan,
+  PlanDetailDTO,
   PlanCreateRequest,
   PlanUpdateRequest,
 } from '../types/performance';
@@ -20,7 +20,7 @@ export const planService = {
    * 根据ID查询计划详情
    */
   getPlanById: (id: number) => {
-    return api.get<PerformancePlan>(`/plans/${id}`);
+    return api.get<PlanDetailDTO>(`/plans/${id}`);
   },
 
   /**
@@ -32,7 +32,7 @@ export const planService = {
     cycleId?: number;
     status?: string;
   }) => {
-    return api.get('/plans', { params });
+    return api.get<any>('/plans', { params });
   },
 
   /**
@@ -40,5 +40,21 @@ export const planService = {
    */
   updatePlanDraft: (id: number, data: PlanUpdateRequest) => {
     return api.put(`/plans/${id}/draft`, data);
+  },
+
+  /**
+   * 提交计划审批
+   */
+  submitPlan: (id: number) => {
+    return api.post(`/plans/${id}/submit`);
+  },
+
+  /**
+   * 审批计划
+   */
+  approvePlan: (id: number, approved: boolean, comment?: string) => {
+    return api.post(`/plans/${id}/approve`, null, {
+      params: { approved, comment },
+    });
   },
 };

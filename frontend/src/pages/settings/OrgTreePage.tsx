@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Tree, Button, Modal, Form, Input, InputNumber, Switch, message, Space, Popconfirm } from 'antd';
+import { Tree, Button, Modal, Form, Input, InputNumber, Switch, message, Space, Popconfirm } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, FolderOpenOutlined } from '@ant-design/icons';
 import type { DataNode } from 'antd/es/tree';
 import { orgService } from '../../services/rbacService';
@@ -151,27 +151,26 @@ const OrgTreePage: React.FC = () => {
 
   return (
     <div>
-      <Card
-        title="组织架构管理"
-        extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => handleAdd()}>
-            新增根组织
-          </Button>
-        }
-      >
-        {treeData.length === 0 && !loading ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#999' }}>
-            <FolderOpenOutlined style={{ fontSize: 48, marginBottom: 16 }} />
-            <p>暂无组织数据，请点击"新增根组织"按钮创建</p>
-          </div>
-        ) : (
-          <Tree
-            treeData={renderTreeNodes(treeData)}
-            showLine
-            defaultExpandAll
-          />
-        )}
-      </Card>
+      {/* 操作栏 */}
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+        <div></div>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => handleAdd()}>
+          新增根组织
+        </Button>
+      </div>
+
+      {treeData.length === 0 && !loading ? (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#999' }}>
+          <FolderOpenOutlined style={{ fontSize: 48, marginBottom: 16 }} />
+          <p>暂无组织数据，请点击"新增根组织"按钮创建</p>
+        </div>
+      ) : (
+        <Tree
+          treeData={renderTreeNodes(treeData)}
+          showLine
+          defaultExpandAll
+        />
+      )}
 
       <Modal
         title={editingOrg ? '编辑组织' : '新增组织'}

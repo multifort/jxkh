@@ -240,6 +240,94 @@ export interface PerformancePlan {
 }
 
 /**
+ * 计划列表 DTO
+ */
+export interface PlanListDTO {
+  id: number;
+  userId: number;
+  employeeName: string;
+  cycleId: number;
+  cycleName: string;
+  orgId: number;
+  status: PlanStatus;
+  totalScore?: number | null;
+  finalLevel?: PerformanceLevel | null;
+  submittedAt?: string | null;
+  approvedAt?: string | null;
+  evaluatedAt?: string | null;
+  calibratedAt?: string | null;
+  archivedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  indicators?: PlanIndicatorDTO[];
+}
+
+/**
+ * 计划指标 DTO
+ */
+export interface PlanIndicatorDTO {
+  id: number;
+  indicatorId: number;
+  name: string;
+  type: string;
+  weight: number;
+  targetValue?: number | null;
+  currentValue?: number;
+  progress?: number;
+  unit?: string | null;
+  remark?: string | null;
+}
+
+/**
+ * 计划详情 DTO
+ */
+export interface PlanDetailDTO {
+  id: number;
+  userId: number;
+  employeeName: string;
+  cycleId: number;
+  cycleName: string;
+  orgId: number;
+  orgName: string;
+  status: PlanStatus;
+  totalScore?: number | null;
+  finalLevel?: PerformanceLevel | null;
+  evaluatorId?: number | null;
+  evaluatorName?: string | null;
+  comment?: string | null;
+  submittedAt?: string | null;
+  approvedAt?: string | null;
+  evaluatedAt?: string | null;
+  calibratedAt?: string | null;
+  archivedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: number;
+  createdByName?: string | null;
+  indicators?: PlanIndicatorDetailDTO[];
+}
+
+/**
+ * 计划指标详情 DTO
+ */
+export interface PlanIndicatorDetailDTO {
+  id: number;
+  indicatorId: number;
+  ownerId: number;
+  ownerName?: string | null;
+  name: string;
+  type: string;
+  weight: number;
+  targetValue?: number | null;
+  currentValue?: number;
+  progress?: number;
+  status?: string | null;
+  unit?: string | null;
+  remark?: string | null;
+  score?: number | null;
+}
+
+/**
  * 创建计划请求
  */
 export interface PlanCreateRequest {

@@ -140,6 +140,13 @@ public class PerformancePlan implements Serializable {
     private Boolean isDeleted = false;
 
     /**
+     * 版本号（乐观锁）
+     */
+    @Version
+    @Column(nullable = false)
+    private Integer version = 0;
+
+    /**
      * 指标实例列表（非持久化字段，用于查询）
      */
     @Transient

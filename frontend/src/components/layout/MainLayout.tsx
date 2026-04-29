@@ -11,7 +11,6 @@ import {
   CalendarOutlined,
   AppstoreOutlined,
   SettingOutlined,
-  PlusOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -26,17 +25,45 @@ const MainLayout: React.FC = () => {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
+  // 路径到页面标题的映射
+  const pageTitleMap: Record<string, string> = {
+    '/': '首页',
+    '/performance/cycles': '周期管理',
+    '/performance/indicators': '指标库',
+    '/performance/weight-schemes': '权重配置',
+    '/performance/plans': '绩效计划',
+    '/settings/org-manage': '组织管理',
+    '/settings/user-manage': '用户管理',
+    '/settings/roles': '角色管理',
+    '/settings/permissions': '权限管理',
+  };
+
+  // 根据当前路径获取页面标题
+  const getPageTitle = () => {
+    return pageTitleMap[location.pathname] || '绩效管理系统';
+  };
+
   // 定义父级菜单及其子路径映射
   const parentMap: Record<string, string[]> = {
-    '/performance': ['/performance/cycles', '/performance/indicators', '/performance/weight-schemes', '/performance/plans/create'],
+    '/performance': ['/performance/cycles', '/performance/indicators', '/performance/weight-schemes', '/performance/plans'],
     '/settings': ['/settings/org-manage', '/settings/user-manage', '/settings/roles', '/settings/permissions'],
   };
 
   // 获取当前路径对应的父级菜单key
   const getDefaultOpenKeys = (pathname: string): string[] => {
+    // 精确匹配
     const parentKey = Object.keys(parentMap).find(parent => 
       parentMap[parent].includes(pathname)
     );
+    
+    // 如果是子路由（如 /performance/plans/create），查找父级
+    if (!parentKey) {
+      const parentKey2 = Object.keys(parentMap).find(parent => 
+        pathname.startsWith(parent + '/')
+      );
+      return parentKey2 ? [parentKey2] : [];
+    }
+    
     return parentKey ? [parentKey] : [];
   };
 
@@ -56,6 +83,33 @@ const MainLayout: React.FC = () => {
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
+  };
+
+  // 获取当前应该选中的菜单项
+  const getSelectedKey = (pathname: string): string => {
+    // 精确匹配菜单项
+    const allMenuKeys = [
+      '/',
+      '/performance/cycles',
+      '/performance/indicators',
+      '/performance/weight-schemes',
+      '/performance/plans',
+      '/settings/org-manage',
+      '/settings/user-manage',
+      '/settings/roles',
+      '/settings/permissions',
+    ];
+    
+    if (allMenuKeys.includes(pathname)) {
+      return pathname;
+    }
+    
+    // 子路由（如 /performance/plans/create）匹配到父级菜单（/performance/plans）
+    const parentMatch = allMenuKeys.find(key => 
+      pathname.startsWith(key + '/')
+    );
+    
+    return parentMatch || pathname;
   };
 
   const menuItems: MenuProps['items'] = [
@@ -85,9 +139,9 @@ const MainLayout: React.FC = () => {
           label: '权重配置',
         },
         {
-          key: '/performance/plans/create',
-          icon: <PlusOutlined />,
-          label: '创建计划',
+          key: '/performance/plans',
+          icon: <AppstoreOutlined />,
+          label: '计划列表',
         },
       ],
     },
@@ -125,23 +179,21 @@ const MainLayout: React.FC = () => {
       <Sider collapsible>
         <div
           style={{
-            height: 32,
-            margin: 16,
-            background: 'rgba(255, 255, 255, 0.2)',
-            borderRadius: 6,
+            height: 64,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: '#fff',
+            fontSize: 18,
             fontWeight: 'bold',
           }}
         >
-          JXKH 系统
+          绩效管理系统
         </div>
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={[getSelectedKey(location.pathname)]}
           openKeys={openKeys}
           onOpenChange={setOpenKeys}
           items={menuItems}
@@ -159,7 +211,7 @@ const MainLayout: React.FC = () => {
           }}
         >
           <div style={{ fontSize: 18, fontWeight: 500 }}>
-            绩效管理系统
+            {getPageTitle()}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <span>欢迎，{user.realName || user.username || '用户'}</span>

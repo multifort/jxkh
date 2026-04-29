@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { 
-  Card, Table, Button, Modal, Form, Input, Select, message, Space, 
+  Table, Button, Modal, Form, Input, Select, message, Space, 
   Popconfirm, Tag, Tooltip 
 } from 'antd';
 import { 
@@ -357,36 +357,38 @@ const UserManagePage: React.FC = () => {
   ];
 
   return (
-    <Card title="用户管理">
-      {/* 搜索栏 */}
-      <Form layout="inline" onFinish={handleSearch} style={{ marginBottom: 16 }}>
-        <Form.Item name="keyword">
-          <Input placeholder="搜索姓名或用户名" allowClear style={{ width: 200 }} />
-        </Form.Item>
-        <Form.Item name="orgId">
-          <Select placeholder="选择组织" allowClear style={{ width: 200 }}>
-            {orgs.map(org => (
-              <Option key={org.id} value={org.id}>{org.name}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-        <Form.Item name="role">
-          <Select placeholder="选择角色" allowClear style={{ width: 150 }}>
-            {roles.map(role => (
-              <Option key={role.code} value={role.code}>{role.name}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-        <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit">搜索</Button>
-            <Button icon={<ReloadOutlined />} onClick={handleReset}>重置</Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              新增用户
-            </Button>
-          </Space>
-        </Form.Item>
-      </Form>
+    <div>
+      {/* 操作栏：左侧筛选器 + 右侧新建按钮 */}
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+        <Form layout="inline" onFinish={handleSearch}>
+          <Form.Item name="keyword">
+            <Input placeholder="搜索姓名或用户名" allowClear style={{ width: 200 }} />
+          </Form.Item>
+          <Form.Item name="orgId">
+            <Select placeholder="选择组织" allowClear style={{ width: 200 }}>
+              {orgs.map(org => (
+                <Option key={org.id} value={org.id}>{org.name}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item name="role">
+            <Select placeholder="选择角色" allowClear style={{ width: 150 }}>
+              {roles.map(role => (
+                <Option key={role.code} value={role.code}>{role.name}</Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">搜索</Button>
+              <Button icon={<ReloadOutlined />} onClick={handleReset}>重置</Button>
+            </Space>
+          </Form.Item>
+        </Form>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          新增用户
+        </Button>
+      </div>
 
       {/* 表格 */}
       <Table
@@ -517,7 +519,7 @@ const UserManagePage: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
-    </Card>
+    </div>
   );
 };
 

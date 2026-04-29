@@ -5,6 +5,8 @@ import CycleManagePage from './pages/performance/CycleManagePage';
 import IndicatorManagePage from './pages/performance/IndicatorManagePage';
 import WeightSchemeManagePage from './pages/performance/WeightSchemeManagePage';
 import PlanCreatePage from './pages/performance/PlanCreatePage';
+import PlanListPage from './pages/performance/PlanListPage';
+import PlanDetailPage from './pages/performance/PlanDetailPage';
 import OrgManagePage from './pages/settings/OrgManagePage';
 import RoleManagePage from './pages/settings/RoleManagePage';
 import UserManagePage from './pages/settings/UserManagePage';
@@ -55,6 +57,8 @@ function App() {
           <Route path="performance/cycles" element={<CycleManagePage />} />
           <Route path="performance/indicators" element={<IndicatorManagePage />} />
           <Route path="performance/weight-schemes" element={<WeightSchemeManagePage />} />
+          <Route path="performance/plans" element={<PlanListPage />} />
+          <Route path="performance/plans/:id" element={<PlanDetailPage />} />
           <Route path="performance/plans/create" element={<PlanCreatePage />} />
           <Route path="settings/org-manage" element={<OrgManagePage />} />
           <Route path="settings/user-manage" element={<UserManagePage />} />

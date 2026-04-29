@@ -5,6 +5,8 @@ import com.iyunxin.jxkh.common.util.SecurityUtils;
 import com.iyunxin.jxkh.module.org.domain.Org;
 import com.iyunxin.jxkh.module.org.repository.OrgRepository;
 import com.iyunxin.jxkh.module.performance.domain.*;
+import com.iyunxin.jxkh.module.performance.dto.PlanDetailDTO;
+import com.iyunxin.jxkh.module.performance.dto.PlanListDTO;
 import com.iyunxin.jxkh.module.performance.repository.IndicatorInstanceRepository;
 import com.iyunxin.jxkh.module.performance.repository.PerformanceCycleRepository;
 import com.iyunxin.jxkh.module.performance.repository.PerformancePlanRepository;
@@ -13,6 +15,7 @@ import com.iyunxin.jxkh.module.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -41,6 +44,7 @@ public class PlanService {
     private final UserRepository userRepository;
     private final OrgRepository orgRepository;
     private final com.iyunxin.jxkh.module.performance.repository.IndicatorRepository indicatorRepository;
+    private final PlanStateMachine planStateMachine;
 
     /**
      * 创建绩效计划
@@ -119,26 +123,185 @@ public class PlanService {
     }
 
     /**
+     * 提交计划审批
+     */
+    @Transactional
+    public void submitPlan(Long planId) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+
+        try {
+            // 1. 查询计划
+            PerformancePlan plan = getPlanById(planId);
+
+            // 2. 校验状态（只有草稿可以提交）
+            if (plan.getStatus() != PlanStatus.DRAFT) {
+                throw new BusinessException("PLAN_STATUS_INVALID", "只有草稿状态的计划可以提交");
+            }
+
+            // 3. 校验权重总和
+            BigDecimal totalWeight = instanceRepository.sumWeightByPlanId(planId);
+            if (totalWeight.compareTo(new BigDecimal("100")) != 0) {
+                throw new BusinessException("PLAN_WEIGHT_INVALID", 
+                    String.format("权重总和必须为100%%，当前为%.2f%%", totalWeight));
+            }
+
+            // 4. 使用状态机转换状态
+            planStateMachine.transition(plan, PlanStatus.PENDING_APPROVE);
+
+            // 5. 记录提交时间
+            plan.setSubmittedAt(LocalDateTime.now());
+            plan.setUpdatedBy(currentUserId);
+            planRepository.save(plan);
+
+            // 6. 获取主管信息并发送通知（暂时用日志占位）
+            User employee = userRepository.findById(plan.getUserId())
+                    .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "用户不存在"));
+            
+            if (employee.getManagerId() != null) {
+                log.info("[通知占位] 发送审批通知给主管: managerId={}, planId={}, employeeName={}",
+                        employee.getManagerId(), planId, employee.getName());
+            } else {
+                log.warn("[通知占位] 员工没有设置主管: userId={}, planId={}", employee.getId(), planId);
+            }
+
+            log.info("计划提交审批成功: planId={}", planId);
+        } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+            log.warn("计划并发更新冲突: planId={}", planId);
+            throw new BusinessException("PLAN_CONCURRENT_UPDATE", "计划已被他人修改，请刷新后重试");
+        }
+    }
+
+    /**
+     * 审批计划
+     *
+     * @param planId   计划ID
+     * @param approved 是否通过
+     * @param comment  审批意见
+     */
+    @Transactional
+    public void approvePlan(Long planId, Boolean approved, String comment) {
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+
+        try {
+            // 1. 查询计划
+            PerformancePlan plan = getPlanById(planId);
+
+            // 2. 校验状态（只有待审批可以审批）
+            if (plan.getStatus() != PlanStatus.PENDING_APPROVE) {
+                throw new BusinessException("PLAN_STATUS_INVALID", "只有待审批状态的计划可以审批");
+            }
+
+            // 3. 使用状态机转换状态
+            PlanStatus targetStatus = approved ? PlanStatus.IN_PROGRESS : PlanStatus.DRAFT;
+            planStateMachine.transition(plan, targetStatus);
+
+            // 4. 记录审批信息
+            plan.setApprovedAt(LocalDateTime.now());
+            plan.setComment(comment);
+            plan.setUpdatedBy(currentUserId);
+            planRepository.save(plan);
+
+            // 5. 发送通知给员工（暂时用日志占位）
+            User employee = userRepository.findById(plan.getUserId())
+                    .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "用户不存在"));
+            
+            String result = approved ? "通过" : "驳回";
+            log.info("[通知占位] 发送审批结果通知给员工: userId={}, planId={}, result={}, comment={}",
+                    employee.getId(), planId, result, comment);
+
+            log.info("计划审批完成: planId={}, result={}", planId, result);
+        } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+            log.warn("计划并发更新冲突: planId={}", planId);
+            throw new BusinessException("PLAN_CONCURRENT_UPDATE", "计划已被他人修改，请刷新后重试");
+        }
+    }
+
+    /**
      * 根据ID查询计划详情
      */
-    public PerformancePlan getPlanById(Long id) {
+    public PlanDetailDTO getPlanById(Long id) {
         PerformancePlan plan = planRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new BusinessException("PLAN_NOT_FOUND", "绩效计划不存在"));
 
         // 数据权限校验
         checkDataPermission(plan);
 
+        // 加载关联数据
+        User employee = userRepository.findById(plan.getUserId())
+                .orElseThrow(() -> new BusinessException("USER_NOT_FOUND", "用户不存在"));
+        
+        PerformanceCycle cycle = cycleRepository.findById(plan.getCycleId())
+                .orElseThrow(() -> new BusinessException("CYCLE_NOT_FOUND", "周期不存在"));
+        
+        Org org = orgRepository.findById(plan.getOrgId())
+                .orElseThrow(() -> new BusinessException("ORG_NOT_FOUND", "组织不存在"));
+
         // 加载指标实例
         List<IndicatorInstance> instances = instanceRepository.findByPlanIdAndIsDeletedFalse(id);
-        plan.setIndicators(instances);
 
-        return plan;
+        // 转换为 DTO
+        return convertToPlanDetailDTO(plan, employee, cycle, org, instances);
+    }
+
+    /**
+     * 转换为 PlanDetailDTO
+     */
+    private PlanDetailDTO convertToPlanDetailDTO(PerformancePlan plan,
+                                                   User employee,
+                                                   PerformanceCycle cycle,
+                                                   Org org,
+                                                   List<IndicatorInstance> instances) {
+        PlanDetailDTO dto = new PlanDetailDTO();
+        dto.setId(plan.getId());
+        dto.setUserId(plan.getUserId());
+        dto.setEmployeeName(employee.getName());
+        dto.setCycleId(plan.getCycleId());
+        dto.setCycleName(cycle.getName());
+        dto.setOrgId(plan.getOrgId());
+        dto.setOrgName(org.getName());
+        dto.setStatus(plan.getStatus());
+        dto.setTotalScore(plan.getTotalScore());
+        dto.setFinalLevel(plan.getFinalLevel());
+        dto.setEvaluatorId(plan.getEvaluatorId());
+        dto.setComment(plan.getComment());
+        dto.setSubmittedAt(plan.getSubmittedAt());
+        dto.setApprovedAt(plan.getApprovedAt());
+        dto.setEvaluatedAt(plan.getEvaluatedAt());
+        dto.setCalibratedAt(plan.getCalibratedAt());
+        dto.setArchivedAt(plan.getArchivedAt());
+        dto.setCreatedAt(plan.getCreatedAt());
+        dto.setUpdatedAt(plan.getUpdatedAt());
+        dto.setCreatedBy(plan.getCreatedBy());
+
+        // 转换指标列表
+        List<PlanDetailDTO.PlanIndicatorDetailDTO> indicatorDTOs = instances.stream()
+            .map(instance -> {
+                PlanDetailDTO.PlanIndicatorDetailDTO indicatorDTO = new PlanDetailDTO.PlanIndicatorDetailDTO();
+                indicatorDTO.setId(instance.getId());
+                indicatorDTO.setIndicatorId(instance.getIndicatorId());
+                indicatorDTO.setOwnerId(instance.getOwnerId());
+                indicatorDTO.setName(instance.getName());
+                indicatorDTO.setType(instance.getType());
+                indicatorDTO.setWeight(instance.getWeight());
+                indicatorDTO.setTargetValue(instance.getTargetValue());
+                indicatorDTO.setCurrentValue(instance.getCurrentValue());
+                indicatorDTO.setProgress(instance.getProgress());
+                indicatorDTO.setStatus(instance.getStatus() != null ? instance.getStatus().name() : null);
+                indicatorDTO.setUnit(instance.getUnit());
+                indicatorDTO.setRemark(instance.getRemark());
+                indicatorDTO.setScore(instance.getScore());
+                return indicatorDTO;
+            })
+            .collect(Collectors.toList());
+        dto.setIndicators(indicatorDTOs);
+
+        return dto;
     }
 
     /**
      * 分页查询计划列表
      */
-    public Page<PerformancePlan> listPlans(int page, int size, Long cycleId, PlanStatus status) {
+    public Page<PlanListDTO> listPlans(int page, int size, Long cycleId, PlanStatus status) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         // 获取当前用户
@@ -169,23 +332,103 @@ public class PlanService {
 
         Page<PerformancePlan> plans = planRepository.findAll(spec, pageable);
 
-        // 批量加载指标实例（优化N+1查询）
-        if (!plans.getContent().isEmpty()) {
-            List<Long> planIds = plans.getContent().stream()
-                .map(PerformancePlan::getId)
-                .collect(Collectors.toList());
-            
-            List<IndicatorInstance> allInstances = instanceRepository.findByPlanIdInAndIsDeletedFalse(planIds);
-            java.util.Map<Long, List<IndicatorInstance>> instancesMap = allInstances.stream()
-                .collect(Collectors.groupingBy(IndicatorInstance::getPlanId));
-            
-            // 填充到每个计划
-            plans.getContent().forEach(plan -> {
-                plan.setIndicators(instancesMap.getOrDefault(plan.getId(), new ArrayList<>()));
-            });
+        // 批量加载关联数据（用户、周期）
+        List<Long> userIds = plans.getContent().stream()
+            .map(PerformancePlan::getUserId)
+            .distinct()
+            .collect(Collectors.toList());
+        
+        List<Long> cycleIds = plans.getContent().stream()
+            .map(PerformancePlan::getCycleId)
+            .distinct()
+            .collect(Collectors.toList());
+
+        // 查询用户信息
+        java.util.Map<Long, String> userMap = new java.util.HashMap<>();
+        if (!userIds.isEmpty()) {
+            List<User> users = userRepository.findAllById(userIds);
+            userMap = users.stream()
+                .collect(Collectors.toMap(User::getId, User::getName));
         }
 
-        return plans;
+        // 查询周期信息
+        java.util.Map<Long, String> cycleMap = new java.util.HashMap<>();
+        if (!cycleIds.isEmpty()) {
+            List<PerformanceCycle> cycles = cycleRepository.findAllById(cycleIds);
+            cycleMap = cycles.stream()
+                .collect(Collectors.toMap(PerformanceCycle::getId, PerformanceCycle::getName));
+        }
+
+        // 批量加载指标实例（优化N+1查询）
+        List<Long> planIds = plans.getContent().stream()
+            .map(PerformancePlan::getId)
+            .collect(Collectors.toList());
+        
+        java.util.Map<Long, List<IndicatorInstance>> instancesMap = new java.util.HashMap<>();
+        if (!planIds.isEmpty()) {
+            List<IndicatorInstance> allInstances = instanceRepository.findByPlanIdInAndIsDeletedFalse(planIds);
+            instancesMap = allInstances.stream()
+                .collect(Collectors.groupingBy(IndicatorInstance::getPlanId));
+        }
+
+        // 转换为 DTO
+        java.util.Map<Long, String> finalUserMap = userMap;
+        java.util.Map<Long, String> finalCycleMap = cycleMap;
+        java.util.Map<Long, List<IndicatorInstance>> finalInstancesMap = instancesMap;
+
+        List<PlanListDTO> dtoList = plans.getContent().stream()
+            .map(plan -> convertToPlanListDTO(plan, finalUserMap, finalCycleMap, finalInstancesMap))
+            .collect(Collectors.toList());
+
+        return new PageImpl<>(dtoList, pageable, plans.getTotalElements());
+    }
+
+    /**
+     * 转换为 PlanListDTO
+     */
+    private PlanListDTO convertToPlanListDTO(PerformancePlan plan, 
+                                              java.util.Map<Long, String> userMap,
+                                              java.util.Map<Long, String> cycleMap,
+                                              java.util.Map<Long, List<IndicatorInstance>> instancesMap) {
+        PlanListDTO dto = new PlanListDTO();
+        dto.setId(plan.getId());
+        dto.setUserId(plan.getUserId());
+        dto.setEmployeeName(userMap.getOrDefault(plan.getUserId(), "未知"));
+        dto.setCycleId(plan.getCycleId());
+        dto.setCycleName(cycleMap.getOrDefault(plan.getCycleId(), "未知"));
+        dto.setOrgId(plan.getOrgId());
+        dto.setStatus(plan.getStatus());
+        dto.setTotalScore(plan.getTotalScore());
+        dto.setFinalLevel(plan.getFinalLevel());
+        dto.setSubmittedAt(plan.getSubmittedAt());
+        dto.setApprovedAt(plan.getApprovedAt());
+        dto.setEvaluatedAt(plan.getEvaluatedAt());
+        dto.setCalibratedAt(plan.getCalibratedAt());
+        dto.setArchivedAt(plan.getArchivedAt());
+        dto.setCreatedAt(plan.getCreatedAt());
+        dto.setUpdatedAt(plan.getUpdatedAt());
+
+        // 转换指标列表
+        List<IndicatorInstance> instances = instancesMap.getOrDefault(plan.getId(), new ArrayList<>());
+        List<PlanListDTO.PlanIndicatorDTO> indicatorDTOs = instances.stream()
+            .map(instance -> {
+                PlanListDTO.PlanIndicatorDTO indicatorDTO = new PlanListDTO.PlanIndicatorDTO();
+                indicatorDTO.setId(instance.getId());
+                indicatorDTO.setIndicatorId(instance.getIndicatorId());
+                indicatorDTO.setName(instance.getName());
+                indicatorDTO.setType(instance.getType());
+                indicatorDTO.setWeight(instance.getWeight());
+                indicatorDTO.setTargetValue(instance.getTargetValue());
+                indicatorDTO.setCurrentValue(instance.getCurrentValue());
+                indicatorDTO.setProgress(instance.getProgress());
+                indicatorDTO.setUnit(instance.getUnit());
+                indicatorDTO.setRemark(instance.getRemark());
+                return indicatorDTO;
+            })
+            .collect(Collectors.toList());
+        dto.setIndicators(indicatorDTOs);
+
+        return dto;
     }
 
     /**

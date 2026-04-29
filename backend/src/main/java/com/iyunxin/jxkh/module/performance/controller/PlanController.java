@@ -3,6 +3,8 @@ package com.iyunxin.jxkh.module.performance.controller;
 import com.iyunxin.jxkh.common.response.ApiResponse;
 import com.iyunxin.jxkh.module.performance.domain.PerformancePlan;
 import com.iyunxin.jxkh.module.performance.domain.PlanStatus;
+import com.iyunxin.jxkh.module.performance.dto.PlanDetailDTO;
+import com.iyunxin.jxkh.module.performance.dto.PlanListDTO;
 import com.iyunxin.jxkh.module.performance.service.PlanService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,23 +38,23 @@ public class PlanController {
     @Operation(summary = "根据ID查询计划详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MANAGER', 'EMPLOYEE')")
-    public ApiResponse<PerformancePlan> getPlanById(
+    public ApiResponse<PlanDetailDTO> getPlanById(
             @Parameter(description = "计划ID") @PathVariable Long id) {
         
-        PerformancePlan plan = planService.getPlanById(id);
+        PlanDetailDTO plan = planService.getPlanById(id);
         return ApiResponse.success(plan);
     }
 
     @Operation(summary = "分页查询计划列表")
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MANAGER', 'EMPLOYEE')")
-    public ApiResponse<Page<PerformancePlan>> listPlans(
+    public ApiResponse<Page<PlanListDTO>> listPlans(
             @Parameter(description = "页码，从0开始") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "周期ID") @RequestParam(required = false) Long cycleId,
             @Parameter(description = "状态筛选") @RequestParam(required = false) PlanStatus status) {
         
-        Page<PerformancePlan> plans = planService.listPlans(page, size, cycleId, status);
+        Page<PlanListDTO> plans = planService.listPlans(page, size, cycleId, status);
         return ApiResponse.success(plans);
     }
 
@@ -64,6 +66,28 @@ public class PlanController {
             @RequestBody PlanService.PlanUpdateRequest request) {
         
         planService.updatePlanDraft(id, request);
+        return ApiResponse.success();
+    }
+
+    @Operation(summary = "提交计划审批")
+    @PostMapping("/{id}/submit")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MANAGER', 'EMPLOYEE')")
+    public ApiResponse<Void> submitPlan(
+            @Parameter(description = "计划ID") @PathVariable Long id) {
+        
+        planService.submitPlan(id);
+        return ApiResponse.success();
+    }
+
+    @Operation(summary = "审批计划")
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MANAGER')")
+    public ApiResponse<Void> approvePlan(
+            @Parameter(description = "计划ID") @PathVariable Long id,
+            @Parameter(description = "是否通过") @RequestParam Boolean approved,
+            @Parameter(description = "审批意见") @RequestParam(required = false) String comment) {
+        
+        planService.approvePlan(id, approved, comment);
         return ApiResponse.success();
     }
 }

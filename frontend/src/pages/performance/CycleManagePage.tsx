@@ -284,17 +284,10 @@ const CycleManagePage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card
-        title="绩效周期管理"
-        extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            新建周期
-          </Button>
-        }
-      >
-        {/* 搜索区域 */}
-        <Form layout="inline" onFinish={handleSearch} style={{ marginBottom: 16 }}>
+    <div>
+      {/* 操作栏：左侧筛选器 + 右侧新建按钮 */}
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+        <Form layout="inline" onFinish={handleSearch}>
           <Form.Item name="keyword">
             <Input placeholder="搜索周期名称" allowClear style={{ width: 200 }} />
           </Form.Item>
@@ -312,18 +305,21 @@ const CycleManagePage: React.FC = () => {
             </Space>
           </Form.Item>
         </Form>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          新建周期
+        </Button>
+      </div>
 
-        {/* 表格 */}
-        <Table
+      {/* 表格 */}
+      <Table
           columns={columns}
           dataSource={cycles}
           rowKey="id"
           loading={loading}
           pagination={pagination}
           onChange={handleTableChange}
-          scroll={{ x: 1200 }}
-        />
-      </Card>
+        scroll={{ x: 1200 }}
+      />
 
       {/* 新增/编辑对话框 */}
       <Modal
