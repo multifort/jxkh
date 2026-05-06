@@ -27,3 +27,74 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* 增强 Ant Design Table 边框样式 - 参考阿里云样式 */
+.ant-table-wrapper {
+  .ant-table {
+    border: none;
+    border-radius: 0;
+  }
+
+  /* 表头样式 */
+  .ant-table-thead > tr > th {
+    background-color: #fafafa;
+    border-bottom: none;
+    font-weight: 500;
+    text-align: center;
+    padding: 12px 16px;
+    position: relative;
+    
+    /* 表头列之间的竖线分隔符 */
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1px;
+      height: 16px;
+      background-color: #e8e8e8;
+    }
+  }
+
+  /* 内容区域样式 */
+  .ant-table-tbody > tr > td {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 12px 16px;
+  }
+
+  /* 最后一行去掉底部边框 */
+  .ant-table-tbody > tr:last-child > td {
+    border-bottom: none;
+  }
+
+  /* 斑马纹效果 - 交替行背景色 */
+  .ant-table-tbody > tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+
+  .ant-table-tbody > tr:nth-child(odd) {
+    background-color: #ffffff;
+  }
+
+  /* hover 效果 */
+  .ant-table-tbody > tr:hover > td {
+    background-color: #e6f7ff !important;
+  }
+
+  /* 表格容器 */
+  .ant-table-container {
+    border: none;
+  }
+
+  .ant-table-content {
+    border: none;
+  }
+
+  /* 分页组件样式 */
+  .ant-pagination {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+  }
+}

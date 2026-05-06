@@ -99,7 +99,7 @@ public class PlanService {
         Long currentUserId = SecurityUtils.getCurrentUserId();
 
         // 1. 查询计划
-        PerformancePlan plan = getPlanById(planId);
+        PerformancePlan plan = findPlanById(planId);
 
         // 2. 只有草稿状态可以修改
         if (plan.getStatus() != PlanStatus.DRAFT) {
@@ -131,7 +131,7 @@ public class PlanService {
 
         try {
             // 1. 查询计划
-            PerformancePlan plan = getPlanById(planId);
+            PerformancePlan plan = findPlanById(planId);
 
             // 2. 校验状态（只有草稿可以提交）
             if (plan.getStatus() != PlanStatus.DRAFT) {
@@ -184,7 +184,7 @@ public class PlanService {
 
         try {
             // 1. 查询计划
-            PerformancePlan plan = getPlanById(planId);
+            PerformancePlan plan = findPlanById(planId);
 
             // 2. 校验状态（只有待审批可以审批）
             if (plan.getStatus() != PlanStatus.PENDING_APPROVE) {
@@ -241,6 +241,14 @@ public class PlanService {
 
         // 转换为 DTO
         return convertToPlanDetailDTO(plan, employee, cycle, org, instances);
+    }
+
+    /**
+     * 根据ID查询计划实体（内部使用）
+     */
+    private PerformancePlan findPlanById(Long id) {
+        return planRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new BusinessException("PLAN_NOT_FOUND", "绩效计划不存在"));
     }
 
     /**

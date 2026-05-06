@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Layout, Menu, theme } from 'antd';
+import { Layout, Menu, theme, Badge } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   DashboardOutlined,
@@ -11,8 +11,10 @@ import {
   CalendarOutlined,
   AppstoreOutlined,
   SettingOutlined,
+  BellOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
+import { notificationService } from '../../services/notificationService';
 
 const { Header, Sider, Content } = Layout;
 
@@ -24,6 +26,7 @@ const MainLayout: React.FC = () => {
   } = theme.useToken();
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // 路径到页面标题的映射
   const pageTitleMap: Record<string, string> = {
@@ -32,6 +35,8 @@ const MainLayout: React.FC = () => {
     '/performance/indicators': '指标库',
     '/performance/weight-schemes': '权重配置',
     '/performance/plans': '绩效计划',
+    '/performance/tracking': '进度跟踪',
+    '/notifications': '通知中心',
     '/settings/org-manage': '组织管理',
     '/settings/user-manage': '用户管理',
     '/settings/roles': '角色管理',
@@ -45,7 +50,7 @@ const MainLayout: React.FC = () => {
 
   // 定义父级菜单及其子路径映射
   const parentMap: Record<string, string[]> = {
-    '/performance': ['/performance/cycles', '/performance/indicators', '/performance/weight-schemes', '/performance/plans'],
+    '/performance': ['/performance/cycles', '/performance/indicators', '/performance/weight-schemes', '/performance/plans', '/performance/tracking'],
     '/settings': ['/settings/org-manage', '/settings/user-manage', '/settings/roles', '/settings/permissions'],
   };
 
@@ -85,6 +90,28 @@ const MainLayout: React.FC = () => {
     navigate('/login');
   };
 
+  // 加载未读通知数量
+  const loadUnreadCount = async () => {
+    try {
+      const response: any = await notificationService.getUnreadCount();
+      let count = 0;
+      if (response?.data) {
+        count = response.data.data !== undefined ? response.data.data : response.data;
+      }
+      setUnreadCount(typeof count === 'number' ? count : 0);
+    } catch (error) {
+      console.error('加载未读数量失败', error);
+    }
+  };
+
+  // 页面加载时获取未读数量
+  useEffect(() => {
+    loadUnreadCount();
+    // 每 30 秒刷新一次未读数量
+    const interval = setInterval(loadUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   // 获取当前应该选中的菜单项
   const getSelectedKey = (pathname: string): string => {
     // 精确匹配菜单项
@@ -94,6 +121,8 @@ const MainLayout: React.FC = () => {
       '/performance/indicators',
       '/performance/weight-schemes',
       '/performance/plans',
+      '/performance/tracking',
+      '/notifications',
       '/settings/org-manage',
       '/settings/user-manage',
       '/settings/roles',
@@ -144,6 +173,11 @@ const MainLayout: React.FC = () => {
           label: '计划列表',
         },
       ],
+    },
+    {
+      key: '/notifications',
+      icon: <BellOutlined />,
+      label: '通知中心',
     },
     {
       key: '/settings',
@@ -214,6 +248,16 @@ const MainLayout: React.FC = () => {
             {getPageTitle()}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <Badge 
+              count={unreadCount} 
+              overflowCount={99}
+              style={{ cursor: 'pointer' }}
+              onClick={() => navigate('/notifications')}
+            >
+              <BellOutlined 
+                style={{ fontSize: 20, color: unreadCount > 0 ? '#ff4d4f' : '#666' }}
+              />
+            </Badge>
             <span>欢迎，{user.realName || user.username || '用户'}</span>
             <LogoutOutlined
               style={{ cursor: 'pointer', fontSize: 18 }}

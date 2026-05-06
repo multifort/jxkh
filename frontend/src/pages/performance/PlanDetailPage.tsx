@@ -5,11 +5,10 @@ import {
   Table,
   Tag,
   Button,
-  Space,
   message,
   Spin,
 } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, LineChartOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { planService } from '../../services/planService';
 import type { PlanDetailDTO, PlanStatus } from '../../types/performance';
@@ -33,9 +32,12 @@ const PlanDetailPage: React.FC = () => {
   const loadPlanDetail = async (planId: number) => {
     setLoading(true);
     try {
-      const response = await planService.getPlanById(planId);
-      if (response.data?.data) {
-        setPlan(response.data.data);
+      const response: any = await planService.getPlanById(planId);
+      // 修复：ApiResponse 结构是 { code, message, data }
+      const planData = response.data?.data || response.data;
+      if (planData) {
+        setPlan(planData);
+        console.log('计划详情数据:', planData); // 调试用
       }
     } catch (error) {
       message.error('加载计划详情失败');
@@ -148,7 +150,21 @@ const PlanDetailPage: React.FC = () => {
       </Button>
 
       {/* 基本信息 */}
-      <Card title="计划基本信息" style={{ marginBottom: 16 }}>
+      <Card 
+        title="计划基本信息" 
+        style={{ marginBottom: 16 }}
+        extra={
+          plan.status === 'IN_PROGRESS' && (
+            <Button 
+              type="primary" 
+              icon={<LineChartOutlined />}
+              onClick={() => navigate(`/performance/tracking/${plan.id}`)}
+            >
+              进度跟踪
+            </Button>
+          )
+        }
+      >
         <Descriptions column={2} bordered>
           <Descriptions.Item label="计划ID">{plan.id}</Descriptions.Item>
           <Descriptions.Item label="状态">

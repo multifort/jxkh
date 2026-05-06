@@ -6,6 +6,7 @@ import com.iyunxin.jxkh.module.performance.domain.PlanStatus;
 import com.iyunxin.jxkh.module.performance.dto.PlanDetailDTO;
 import com.iyunxin.jxkh.module.performance.dto.PlanListDTO;
 import com.iyunxin.jxkh.module.performance.service.PlanService;
+import com.iyunxin.jxkh.module.performance.service.RiskDetectionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class PlanController {
 
     private final PlanService planService;
+    private final RiskDetectionService riskDetectionService;
 
     @Operation(summary = "创建绩效计划")
     @PostMapping
@@ -89,5 +91,15 @@ public class PlanController {
         
         planService.approvePlan(id, approved, comment);
         return ApiResponse.success();
+    }
+
+    @Operation(summary = "查询计划风险")
+    @GetMapping("/{id}/risks")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MANAGER', 'EMPLOYEE')")
+    public ApiResponse<RiskDetectionService.RiskAssessment> getPlanRisks(
+            @Parameter(description = "计划ID") @PathVariable Long id) {
+        
+        RiskDetectionService.RiskAssessment risk = riskDetectionService.assessPlanRisk(id);
+        return ApiResponse.success(risk);
     }
 }

@@ -7,6 +7,8 @@ import WeightSchemeManagePage from './pages/performance/WeightSchemeManagePage';
 import PlanCreatePage from './pages/performance/PlanCreatePage';
 import PlanListPage from './pages/performance/PlanListPage';
 import PlanDetailPage from './pages/performance/PlanDetailPage';
+import ProgressTrackingPage from './pages/performance/ProgressTrackingPage';
+import NotificationCenterPage from './pages/notification/NotificationCenterPage';
 import OrgManagePage from './pages/settings/OrgManagePage';
 import RoleManagePage from './pages/settings/RoleManagePage';
 import UserManagePage from './pages/settings/UserManagePage';
@@ -60,6 +62,8 @@ function App() {
           <Route path="performance/plans" element={<PlanListPage />} />
           <Route path="performance/plans/:id" element={<PlanDetailPage />} />
           <Route path="performance/plans/create" element={<PlanCreatePage />} />
+          <Route path="performance/tracking/:planId" element={<ProgressTrackingPage />} />
+          <Route path="notifications" element={<NotificationCenterPage />} />
           <Route path="settings/org-manage" element={<OrgManagePage />} />
           <Route path="settings/user-manage" element={<UserManagePage />} />
           <Route path="settings/roles" element={<RoleManagePage />} />

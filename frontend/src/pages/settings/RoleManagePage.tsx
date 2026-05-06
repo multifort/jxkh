@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Table, Button, Modal, Form, Input, InputNumber, Switch, message, Space, Popconfirm, Tag, Transfer } from 'antd';
+import { Table, Button, Modal, Form, Input, InputNumber, Switch, message, Space, Popconfirm, Tag, Transfer } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { roleService, permissionService } from '../../services/rbacService';

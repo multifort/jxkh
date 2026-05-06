@@ -128,9 +128,37 @@ app:
 
 # AI 服务配置
 ai:
-  openai:
-    api-key: ${AI_API_KEY:}
-    model: ${AI_MODEL:gpt-4}
-    base-url: ${AI_BASE_URL:https://api.openai.com/v1}
+  enabled: ${AI_ENABLED:true}
+  provider: ${AI_PROVIDER:aliyun}  # aliyun 或 openai
+  aliyun:
+    api-key: ${AI_ALIYUN_API_KEY:sk-7e00364ef5d841a09300aafdf88072df}
+    model: ${AI_ALIYUN_MODEL:qwen-plus}
+    base-url: ${AI_ALIYUN_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
     timeout: ${AI_TIMEOUT:30000}
-    enabled: ${AI_ENABLED:false}
+  openai:
+    api-key: ${AI_OPENAI_API_KEY:}
+    model: ${AI_OPENAI_MODEL:gpt-4}
+    base-url: ${AI_OPENAI_BASE_URL:https://api.openai.com/v1}
+    timeout: ${AI_TIMEOUT:30000}
+
+# MinIO 文件存储配置
+minio:
+  enabled: ${MINIO_ENABLED:true}
+  endpoint: ${MINIO_ENDPOINT:http://113.45.154.4:32308}
+  access-key: ${MINIO_ACCESS_KEY:admin}
+  secret-key: ${MINIO_SECRET_KEY:0815ningmeng}
+  bucket-name: ${MINIO_BUCKET_NAME:jxkh-files}
+  # 文件上传限制
+  upload:
+    max-file-size: ${MINIO_MAX_FILE_SIZE:10MB}
+    max-request-size: ${MINIO_MAX_REQUEST_SIZE:50MB}
+    allowed-types: ${MINIO_ALLOWED_TYPES:pdf,doc,docx,xls,xlsx,png,jpg,jpeg,gif,txt}
+
+# 文件病毒扫描配置
+virus-scan:
+  enabled: ${VIRUS_SCAN_ENABLED:true}
+  # 使用 ClamAV 进行病毒扫描
+  clamav:
+    host: ${CLAMAV_HOST:localhost}
+    port: ${CLAMAV_PORT:3310}
+    timeout: ${CLAMAV_TIMEOUT:10000}
