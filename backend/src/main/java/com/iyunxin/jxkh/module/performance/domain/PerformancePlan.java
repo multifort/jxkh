@@ -53,17 +53,36 @@ public class PerformancePlan implements Serializable {
     private PlanStatus status = PlanStatus.DRAFT;
 
     /**
-     * 总分
+     * 总分（旧字段，保留兼容）
      */
     @Column(name = "total_score", precision = 5, scale = 2)
     private BigDecimal totalScore;
 
     /**
-     * 最终等级
+     * 最终得分
+     */
+    @Column(name = "final_score", precision = 5, scale = 2)
+    private BigDecimal finalScore;
+
+    /**
+     * 最终等级（旧字段，保留兼容）
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "final_level", length = 10)
     private PerformanceLevel finalLevel;
+
+    /**
+     * 绩效等级
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "performance_level", length = 10)
+    private PerformanceLevel performanceLevel;
+
+    /**
+     * 分数计算时间
+     */
+    @Column(name = "calculated_at")
+    private LocalDateTime calculatedAt;
 
     /**
      * 评估人ID

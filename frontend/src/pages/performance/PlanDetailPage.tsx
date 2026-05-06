@@ -8,7 +8,7 @@ import {
   message,
   Spin,
 } from 'antd';
-import { ArrowLeftOutlined, LineChartOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, LineChartOutlined, EditOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { planService } from '../../services/planService';
 import type { PlanDetailDTO, PlanStatus } from '../../types/performance';
@@ -22,6 +22,10 @@ const PlanDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [plan, setPlan] = useState<PlanDetailDTO | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // 获取当前用户信息
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const userRole = currentUser.roles?.[0]?.code || '';
 
   useEffect(() => {
     if (id) {
@@ -154,15 +158,41 @@ const PlanDetailPage: React.FC = () => {
         title="计划基本信息" 
         style={{ marginBottom: 16 }}
         extra={
-          plan.status === 'IN_PROGRESS' && (
-            <Button 
-              type="primary" 
-              icon={<LineChartOutlined />}
-              onClick={() => navigate(`/performance/tracking/${plan.id}`)}
-            >
-              进度跟踪
-            </Button>
-          )
+          <div style={{ display: 'flex', gap: 8 }}>
+            {/* 进度跟踪按钮 - 执行中状态 */}
+            {plan.status === 'IN_PROGRESS' && (
+              <Button 
+                type="primary" 
+                icon={<LineChartOutlined />}
+                onClick={() => navigate(`/performance/tracking/${plan.id}`)}
+              >
+                进度跟踪
+              </Button>
+            )}
+            
+            {/* 自评按钮 - 待评估状态且当前用户是员工本人 */}
+            {plan.status === 'PENDING_EVAL' && currentUser.id === plan.userId && (
+              <Button 
+                type="primary" 
+                icon={<EditOutlined />}
+                onClick={() => navigate(`/performance/evaluation/self/${plan.id}`)}
+              >
+                去自评
+              </Button>
+            )}
+            
+            {/* 上级评分按钮 - 待评估或已评估状态且当前用户是主管 */}
+            {(plan.status === 'PENDING_EVAL' || plan.status === 'EVALUATED') && 
+             (userRole === 'MANAGER' || userRole === 'ADMIN') && (
+              <Button 
+                type="primary" 
+                icon={<UserOutlined />}
+                onClick={() => navigate(`/performance/evaluation/manager/${plan.id}`)}
+              >
+                去评分
+              </Button>
+            )}
+          </div>
         }
       >
         <Descriptions column={2} bordered>

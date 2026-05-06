@@ -45,6 +45,7 @@ public class PlanService {
     private final OrgRepository orgRepository;
     private final com.iyunxin.jxkh.module.performance.repository.IndicatorRepository indicatorRepository;
     private final PlanStateMachine planStateMachine;
+    private final ScoreService scoreService;
 
     /**
      * 创建绩效计划
@@ -387,6 +388,25 @@ public class PlanService {
         List<PlanListDTO> dtoList = plans.getContent().stream()
             .map(plan -> convertToPlanListDTO(plan, finalUserMap, finalCycleMap, finalInstancesMap))
             .collect(Collectors.toList());
+
+        // 批量查询评分进度
+        if (!planIds.isEmpty()) {
+            java.util.Map<Long, ScoreService.ScoreProgressDTO> progressMap = scoreService.getScoreProgressBatch(planIds);
+            
+            // 将评分进度设置到 DTO 中
+            dtoList.forEach(dto -> {
+                ScoreService.ScoreProgressDTO progress = progressMap.get(dto.getId());
+                if (progress != null) {
+                    dto.setTotalIndicators(progress.getTotalIndicators());
+                    dto.setSelfScoredCount(progress.getSelfScoredCount());
+                    dto.setManagerScoredCount(progress.getManagerScoredCount());
+                } else {
+                    dto.setTotalIndicators(0);
+                    dto.setSelfScoredCount(0);
+                    dto.setManagerScoredCount(0);
+                }
+            });
+        }
 
         return new PageImpl<>(dtoList, pageable, plans.getTotalElements());
     }

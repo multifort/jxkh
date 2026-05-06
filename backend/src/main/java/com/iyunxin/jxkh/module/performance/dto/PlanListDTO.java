@@ -103,6 +103,21 @@ public class PlanListDTO implements Serializable {
     private List<PlanIndicatorDTO> indicators;
 
     /**
+     * 自评进度（已评分指标数/总指标数）
+     */
+    private Integer selfScoredCount;
+
+    /**
+     * 上级评进度（已评分指标数/总指标数）
+     */
+    private Integer managerScoredCount;
+
+    /**
+     * 总指标数
+     */
+    private Integer totalIndicators;
+
+    /**
      * 指标实例 DTO
      */
     @Data

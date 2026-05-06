@@ -36,6 +36,8 @@ const MainLayout: React.FC = () => {
     '/performance/weight-schemes': '权重配置',
     '/performance/plans': '绩效计划',
     '/performance/tracking': '进度跟踪',
+    '/performance/evaluation/self': '员工自评',
+    '/performance/evaluation/manager': '上级评分',
     '/notifications': '通知中心',
     '/settings/org-manage': '组织管理',
     '/settings/user-manage': '用户管理',
@@ -50,7 +52,7 @@ const MainLayout: React.FC = () => {
 
   // 定义父级菜单及其子路径映射
   const parentMap: Record<string, string[]> = {
-    '/performance': ['/performance/cycles', '/performance/indicators', '/performance/weight-schemes', '/performance/plans', '/performance/tracking'],
+    '/performance': ['/performance/cycles', '/performance/indicators', '/performance/weight-schemes', '/performance/plans', '/performance/tracking', '/performance/evaluation'],
     '/settings': ['/settings/org-manage', '/settings/user-manage', '/settings/roles', '/settings/permissions'],
   };
 
@@ -122,6 +124,8 @@ const MainLayout: React.FC = () => {
       '/performance/weight-schemes',
       '/performance/plans',
       '/performance/tracking',
+      '/performance/evaluation/self',
+      '/performance/evaluation/manager',
       '/notifications',
       '/settings/org-manage',
       '/settings/user-manage',
@@ -171,6 +175,16 @@ const MainLayout: React.FC = () => {
           key: '/performance/plans',
           icon: <AppstoreOutlined />,
           label: '计划列表',
+        },
+        {
+          key: '/performance/evaluation/self',
+          icon: <UserOutlined />,
+          label: '员工自评',
+        },
+        {
+          key: '/performance/evaluation/manager',
+          icon: <TeamOutlined />,
+          label: '上级评分',
         },
       ],
     },

@@ -260,6 +260,11 @@ export interface PlanListDTO {
   createdAt: string;
   updatedAt: string;
   indicators?: PlanIndicatorDTO[];
+  
+  // 评分进度
+  selfScoredCount?: number;
+  managerScoredCount?: number;
+  totalIndicators?: number;
 }
 
 /**
