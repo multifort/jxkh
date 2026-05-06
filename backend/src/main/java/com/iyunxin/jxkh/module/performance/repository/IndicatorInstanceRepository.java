@@ -42,4 +42,11 @@ public interface IndicatorInstanceRepository extends JpaRepository<IndicatorInst
      * 批量查询指定计划的指标实例（用于优化N+1查询）
      */
     List<IndicatorInstance> findByPlanIdInAndIsDeletedFalse(List<Long> planIds);
+    
+    /**
+     * 批量统计多个计划的指标实例数量
+     * @return List<Object[]> where Object[0] = planId, Object[1] = count
+     */
+    @Query("SELECT i.planId, COUNT(i) FROM IndicatorInstance i WHERE i.planId IN :planIds AND i.isDeleted = false GROUP BY i.planId")
+    List<Object[]> countByPlanIdInAndIsDeletedFalse(@Param("planIds") List<Long> planIds);
 }

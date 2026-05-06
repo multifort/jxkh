@@ -73,7 +73,26 @@ const PlanListPage: React.FC = () => {
           message.success('提交审批成功');
           loadPlans();
         } catch (error: any) {
-          message.error(error.response?.data?.message || '提交审批失败');
+          const errorCode = error.response?.data?.code;
+          const errorMessage = error.response?.data?.message || '提交审批失败';
+          
+          // 检测并发冲突错误码
+          if (errorCode === 'PLAN_CONCURRENT_UPDATE') {
+            message.warning({
+              content: '计划已被他人修改，正在重新加载最新数据...',
+              duration: 2,
+            });
+            
+            // 自动重新加载数据
+            await loadPlans();
+            
+            // 提示用户重新操作
+            setTimeout(() => {
+              message.info('数据已更新，请重新提交');
+            }, 500);
+          } else {
+            message.error(errorMessage);
+          }
         }
       },
     });
@@ -109,7 +128,29 @@ const PlanListPage: React.FC = () => {
       setApproveModalVisible(false);
       loadPlans();
     } catch (error: any) {
-      message.error(error.response?.data?.message || '审批失败');
+      const errorCode = error.response?.data?.code;
+      const errorMessage = error.response?.data?.message || '审批失败';
+      
+      // 检测并发冲突错误码
+      if (errorCode === 'PLAN_CONCURRENT_UPDATE') {
+        message.warning({
+          content: '计划已被他人修改，正在重新加载最新数据...',
+          duration: 2,
+        });
+        
+        // 自动重新加载数据
+        await loadPlans();
+        
+        // 关闭对话框
+        setApproveModalVisible(false);
+        
+        // 提示用户重新操作
+        setTimeout(() => {
+          message.info('数据已更新，请重新审批');
+        }, 500);
+      } else {
+        message.error(errorMessage);
+      }
     } finally {
       setApproveLoading(false);
     }

@@ -33,6 +33,13 @@ public interface PerformanceCycleRepository extends JpaRepository<PerformanceCyc
             LocalDate endDate, LocalDate startDate);
 
     /**
+     * 检查指定时间范围内是否存在冲突的周期（排除指定ID）
+     * 使用数据库层面的时间范围重叠判断，避免加载所有数据到内存
+     */
+    boolean existsByStartDateLessThanEqualAndEndDateGreaterThanEqualAndIdNotAndIsDeletedFalse(
+            LocalDate endDate, LocalDate startDate, Long excludeId);
+
+    /**
      * 根据组织ID查询周期列表
      */
     List<PerformanceCycle> findByOrgIdAndIsDeletedFalse(Long orgId);

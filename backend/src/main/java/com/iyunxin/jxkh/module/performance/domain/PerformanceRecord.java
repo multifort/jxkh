@@ -1,6 +1,7 @@
 package com.iyunxin.jxkh.module.performance.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.SQLRestriction;
@@ -43,8 +44,9 @@ public class PerformanceRecord {
     private RecordType type;
     
     /**
-     * 内容
+     * 内容（最大50000字符）
      */
+    @Size(max = 50000, message = "内容长度不能超过50000字符")
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
     

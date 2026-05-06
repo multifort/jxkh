@@ -24,12 +24,15 @@ const ManagerEvaluationPage: React.FC = () => {
     try {
       // 查询所有待评估和已评估状态的计划
       const response: any = await planService.listPlans({ 
+        page: 0,
+        size: 100,
         status: 'PENDING_EVAL' 
       });
       const data = response.data?.data || response.data;
       
       // 过滤出当前主管下属的计划（这里简化处理，实际应该根据 manager_id 查询）
-      const managerPlans = data.records || [];
+      // Spring Data JPA 返回的是 content 而不是 records
+      const managerPlans = data.content || data.records || [];
       
       setPlans(managerPlans);
     } catch (error: any) {

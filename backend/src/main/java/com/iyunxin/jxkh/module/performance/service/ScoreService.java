@@ -1,4 +1,4 @@
-package com.iyunxin.jxkh.module.performance.service;
+、package com.iyunxin.jxkh.module.performance.service;
 
 import com.iyunxin.jxkh.common.exception.BusinessException;
 import com.iyunxin.jxkh.module.performance.domain.*;
@@ -37,6 +37,11 @@ public class ScoreService {
 
         if (plan.getStatus() != PlanStatus.PENDING_EVAL && plan.getStatus() != PlanStatus.EVALUATED) {
             throw new BusinessException("PLAN_STATUS_INVALID", "当前计划状态不允许评分");
+        }
+        
+        // 1.1 防止重复提交：如果计划已完成评估，不允许再评分
+        if (plan.getStatus() == PlanStatus.EVALUATED && plan.getEvaluatedAt() != null) {
+            throw new BusinessException("PLAN_ALREADY_EVALUATED", "该计划已完成评估，不允许再评分");
         }
 
         // 2. 验证指标实例是否存在

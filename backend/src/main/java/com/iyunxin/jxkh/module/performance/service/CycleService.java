@@ -259,22 +259,29 @@ public class CycleService {
      * 检查时间冲突
      */
     private void checkDateConflict(LocalDate startDate, LocalDate endDate, Long excludeId) {
-        boolean hasConflict = cycleRepository.existsByStartDateLessThanEqualAndEndDateGreaterThanEqualAndIsDeletedFalse(
-                endDate, startDate);
+        boolean hasConflict;
+        
+        if (excludeId != null) {
+            // 更新场景：排除当前周期ID，直接在数据库层判断
+            hasConflict = cycleRepository.existsByStartDateLessThanEqualAndEndDateGreaterThanEqualAndIdNotAndIsDeletedFalse(
+                    endDate, startDate, excludeId);
+        } else {
+            // 创建场景：检查所有周期
+            hasConflict = cycleRepository.existsByStartDateLessThanEqualAndEndDateGreaterThanEqualAndIsDeletedFalse(
+                    endDate, startDate);
+        }
         
         if (hasConflict) {
-            // 需要进一步确认是否是同一个周期
-            if (excludeId != null) {
-                PerformanceCycle conflictingCycle = cycleRepository.findByIsDeletedFalse().stream()
-                        .filter(c -> !c.getId().equals(excludeId))
-                        .filter(c -> !c.getStartDate().isAfter(endDate) && !c.getEndDate().isBefore(startDate))
-                        .findFirst()
-                        .orElse(null);
-                
-                if (conflictingCycle != null) {
-                    throw new BusinessException("CYCLE_DATE_CONFLICT", 
-                            String.format("与周期 [%s] 的时间范围冲突", conflictingCycle.getName()));
-                }
+            // 查询冲突的周期信息用于错误提示
+            PerformanceCycle conflictingCycle = cycleRepository.findByIsDeletedFalse().stream()
+                    .filter(c -> excludeId == null || !c.getId().equals(excludeId))
+                    .filter(c -> !c.getStartDate().isAfter(endDate) && !c.getEndDate().isBefore(startDate))
+                    .findFirst()
+                    .orElse(null);
+            
+            if (conflictingCycle != null) {
+                throw new BusinessException("CYCLE_DATE_CONFLICT", 
+                        String.format("与周期 [%s] 的时间范围冲突", conflictingCycle.getName()));
             } else {
                 throw new BusinessException("CYCLE_DATE_CONFLICT", "时间范围与其他周期冲突");
             }

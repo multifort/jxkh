@@ -12,13 +12,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iyunxin.jxkh.config.AiConfig;
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.Refill;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,6 +39,19 @@ public class AISummaryService {
     
     private final AiConfig aiConfig;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    
+    // 限流桶：每个用户一个桶，每分钟最多10次调用
+    private final ConcurrentHashMap<String, Bucket> rateLimiters = new ConcurrentHashMap<>();
+    
+    /**
+     * 获取或创建限流桶
+     */
+    private Bucket getRateLimiter(String userId) {
+        return rateLimiters.computeIfAbsent(userId, k -> {
+            Bandwidth limit = Bandwidth.classic(10, Refill.greedy(10, Duration.ofMinutes(1)));
+            return Bucket.builder().addLimit(limit).build();
+        });
+    }
     
     /**
      * 生成周报智能总结
@@ -55,7 +75,7 @@ public class AISummaryService {
         String prompt = buildWeeklySummaryPrompt(sanitizedContent);
         
         try {
-            String response = callAI(prompt);
+            String response = callAIWithRetry(prompt);
             return parseAIResponse(response);
         } catch (Exception e) {
             log.error("AI 总结生成失败", e);
@@ -116,7 +136,27 @@ public class AISummaryService {
     }
     
     /**
-     * 调用 AI API
+     * 调用 AI API（带重试和限流）
+     * 最多重试3次，指数退避（初始2秒，最大10秒）
+     */
+    @Retryable(
+        retryFor = {ApiException.class, NoApiKeyException.class, InputRequiredException.class},
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 2000, maxDelay = 10000, multiplier = 2)
+    )
+    private String callAIWithRetry(String prompt) throws ApiException, NoApiKeyException, InputRequiredException {
+        // 检查限流（使用固定用户ID "default"，实际使用时可以传入真实用户ID）
+        Bucket bucket = getRateLimiter("default");
+        if (!bucket.tryConsume(1)) {
+            throw new IllegalStateException("AI 服务调用频率过高，请稍后再试（限制：10次/分钟）");
+        }
+        
+        log.info("调用 AI API 生成总结...");
+        return callAI(prompt);
+    }
+    
+    /**
+     * 实际调用 AI API 的方法
      */
     private String callAI(String prompt) throws ApiException, NoApiKeyException, InputRequiredException {
         AiConfig.AliyunConfig config = aiConfig.getAliyun();

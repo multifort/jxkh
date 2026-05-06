@@ -90,6 +90,14 @@ const RecordFormModal: React.FC<RecordFormModalProps> = ({
       setFileList([]);
       setAiSummary(null);
     }
+    
+    // Cleanup function: 组件卸载或关闭时清理状态
+    return () => {
+      setContent('');
+      setFileList([]);
+      setAiSummary(null);
+      form.resetFields();
+    };
   }, [editingRecord, form, visible]);
 
   const handleGenerateSummary = async () => {
@@ -116,6 +124,45 @@ const RecordFormModal: React.FC<RecordFormModalProps> = ({
   };
 
   const handleUpload = async (file: File) => {
+    // 验证文件大小（10MB）
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      message.error(`${file.name} 文件大小超过限制（最大10MB）`);
+      return false;
+    }
+    
+    // 验证文件类型
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/bmp',
+      'text/plain',
+      'text/csv',
+      'application/zip',
+      'application/x-rar-compressed',
+    ];
+    
+    const fileName = file.name.toLowerCase();
+    const allowedExtensions = [
+      '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+      '.jpg', '.jpeg', '.png', '.gif', '.bmp',
+      '.txt', '.csv', '.zip', '.rar'
+    ];
+    
+    const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+    if (!hasValidExtension) {
+      message.error(`${file.name} 不支持的文件类型`);
+      return false;
+    }
+    
     setUploading(true);
     try {
       const response = await fileService.uploadFile(file);
@@ -203,6 +250,7 @@ const RecordFormModal: React.FC<RecordFormModalProps> = ({
       title={editingRecord ? '编辑记录' : '新建记录'}
       open={visible}
       onCancel={onCancel}
+      destroyOnClose={true}
       width={900}
       footer={[
         <Button key="cancel" onClick={onCancel}>
@@ -245,13 +293,37 @@ const RecordFormModal: React.FC<RecordFormModalProps> = ({
         </Form.Item>
 
         <Form.Item
-          label="内容"
-          rules={[{ required: true, message: '请输入内容' }]}
+          label={
+            <Space>
+              <span>内容</span>
+              <span style={{ color: content.length > 10000 ? '#ff4d4f' : '#999', fontSize: 12 }}>
+                {content.length}/10000
+              </span>
+            </Space>
+          }
+          rules={[
+            { required: true, message: '请输入内容' },
+            {
+              validator: (_, value) => {
+                if (content.length > 10000) {
+                  return Promise.reject(new Error('内容长度不能超过10000字符'));
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
         >
           <ReactQuill
             theme="snow"
             value={content}
-            onChange={setContent}
+            onChange={(value) => {
+              // 限制最大长度
+              if (value.length <= 10000) {
+                setContent(value);
+              } else {
+                message.warning('内容长度不能超过10000字符');
+              }
+            }}
             modules={modules}
             style={{ height: 200, marginBottom: 50 }}
           />

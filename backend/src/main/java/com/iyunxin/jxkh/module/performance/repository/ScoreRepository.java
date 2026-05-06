@@ -45,4 +45,12 @@ public interface ScoreRepository extends JpaRepository<Score, Long> {
      */
     long countByEvaluatorIdAndStatusAndIsDeletedFalse(Long evaluatorId, 
                                                        com.iyunxin.jxkh.module.performance.domain.ScoreStatus status);
+    
+    /**
+     * 批量统计多个计划的某种类型评分数量
+     * @return List<Object[]> where Object[0] = planId, Object[1] = count
+     */
+    @Query("SELECT s.planId, COUNT(s) FROM Score s WHERE s.planId IN :planIds AND s.type = :type AND s.isDeleted = false GROUP BY s.planId")
+    List<Object[]> countByPlanIdInAndTypeAndIsDeletedFalse(@Param("planIds") List<Long> planIds,
+                                                            @Param("type") ScoreType type);
 }

@@ -271,7 +271,9 @@ public class WeightSchemeService {
         // 创建新方案
         WeightScheme newScheme = new WeightScheme();
         newScheme.setName(source.getName() + " (复制)");
-        newScheme.setCode(source.getCode() + "_COPY_" + System.currentTimeMillis());
+        // 使用 UUID 短格式（8位）替代时间戳，提高可读性
+        String shortUuid = java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        newScheme.setCode(source.getCode() + "_COPY_" + shortUuid);
         newScheme.setCycleId(source.getCycleId());
         newScheme.setOrgId(source.getOrgId());
         newScheme.setVersion(1);

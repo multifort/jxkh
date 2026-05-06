@@ -23,12 +23,18 @@ const SelfEvaluationPage: React.FC = () => {
     setLoading(true);
     try {
       // 查询所有待评估状态的计划
-      const response: any = await planService.listPlans({ status: 'PENDING_EVAL' });
+      const response: any = await planService.listPlans({ 
+        page: 0,
+        size: 100,
+        status: 'PENDING_EVAL' 
+      });
       const data = response.data?.data || response.data;
       
       // 过滤出当前用户的计划
       const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const userPlans = (data.records || []).filter((plan: any) => plan.userId === currentUser.id);
+      // Spring Data JPA 返回的是 content 而不是 records
+      const plansData = data.content || data.records || [];
+      const userPlans = plansData.filter((plan: any) => plan.userId === currentUser.id);
       
       setPlans(userPlans);
     } catch (error: any) {
