@@ -100,7 +100,7 @@ const SelfEvaluationPage: React.FC = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <Card title="员工自评">
+      <Card bordered={false}>
         <Spin spinning={loading}>
           {plans.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
